@@ -1,13 +1,9 @@
 import { Box, Button, Divider, IconButton, Typography } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import CloseIcon from "@mui/icons-material/Close";
-import AddIcon from "@mui/icons-material/Add";
-import RemoveIcon from "@mui/icons-material/Remove";
 import styled from "@emotion/styled";
 import { shades } from "../../theme";
 import {
-  decreaseCount,
-  increaseCount,
   removeFromCart,
   setIsCartOpen,
 } from "../../state";
@@ -94,26 +90,12 @@ const CartMenu = () => {
                         alignItems="center"
                         border={`1.5px solid ${shades.neutral[500]}`}
                       >
-                        <IconButton
-                          onClick={() =>
-                            dispatch(decreaseCount({ id: item.id }))
-                          }
-                        >
-                          <RemoveIcon />
-                        </IconButton>
-                        <Typography>{item.count}</Typography>
-                        <IconButton
-                          onClick={() =>
-                            dispatch(increaseCount({ id: item.id }))
-                          }
-                        >
-                          <AddIcon />
-                        </IconButton>
+                        {" "}
                       </Box>
 
                       {/* PRICE */}
                       <Typography fontWeight="bold">
-                        ${item.attributes.price}
+                        € {item.attributes.price}
                       </Typography>
                     </FlexBox>
                   </Box>

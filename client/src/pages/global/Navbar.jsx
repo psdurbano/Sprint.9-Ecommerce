@@ -3,7 +3,6 @@ import { Badge, Box, IconButton } from "@mui/material";
 import {
   PersonOutline,
   ShoppingBagOutlined,
-  MenuOutlined,
   SearchOutlined,
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
@@ -58,7 +57,10 @@ function Navbar() {
           <IconButton sx={{ color: "#FFC709" }}>
             <SearchOutlined />
           </IconButton>
-          <IconButton sx={{ color: "#FFC709" }}>
+          <IconButton
+            sx={{ color: "#FFC709" }}
+            onClick={() => navigate("/SignUP")}
+          >
             <PersonOutline />
           </IconButton>
           <Badge
@@ -82,9 +84,6 @@ function Navbar() {
               <ShoppingBagOutlined />
             </IconButton>
           </Badge>
-          <IconButton sx={{ color: "#FFC709" }}>
-            <MenuOutlined />
-          </IconButton>
         </Box>
       </Box>
     </Box>
