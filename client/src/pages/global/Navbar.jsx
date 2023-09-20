@@ -1,10 +1,6 @@
 import { useDispatch, useSelector } from "react-redux";
 import { Badge, Box, IconButton } from "@mui/material";
-import {
-  PersonOutline,
-  ShoppingBagOutlined,
-  SearchOutlined,
-} from "@mui/icons-material";
+import { PersonOutline, ShoppingBagOutlined } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { shades } from "../../theme";
 import { setIsCartOpen } from "../../state";
@@ -54,9 +50,6 @@ function Navbar() {
           columnGap="20px"
           zIndex="2"
         >
-          <IconButton sx={{ color: "#FFC709" }}>
-            <SearchOutlined />
-          </IconButton>
           <IconButton
             sx={{ color: "#FFC709" }}
             onClick={() => navigate("/SignUP")}

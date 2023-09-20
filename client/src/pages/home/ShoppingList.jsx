@@ -3,7 +3,7 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Box from "@mui/material/Box";
 import Item from "../../components/Item";
-import { Typography } from "@mui/material";
+import { Typography, Input } from "@mui/material";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import { useDispatch, useSelector } from "react-redux";
 import { setItems } from "../../state";
@@ -11,11 +11,16 @@ import { setItems } from "../../state";
 const ShoppingList = () => {
   const dispatch = useDispatch();
   const [value, setValue] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const items = useSelector((state) => state.cart.items);
   const breakPoint = useMediaQuery("(min-width:600px)");
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
+  };
+
+  const handleSearch = (event) => {
+    setSearchTerm(event.target.value);
   };
 
   async function getItems() {
@@ -29,24 +34,20 @@ const ShoppingList = () => {
 
   useEffect(() => {
     getItems();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const JazzAlbums = items.filter(
-    (item) => item.attributes.category === "jazz"
-  );
-  const SoulAlbums = items.filter(
-    (item) => item.attributes.category === "soul"
-  );
-  const PopAlbums = items.filter((item) => item.attributes.category === "pop");
-  const RockAlbums = items.filter(
-    (item) => item.attributes.category === "rock"
-  );
+  }, []);
 
   return (
     <Box width="80%" margin="80px auto">
       <Typography variant="h3" textAlign="center">
         Our Top Picks <b>Albums</b>
       </Typography>
+      <Input
+        value={searchTerm}
+        onChange={handleSearch}
+        placeholder="Search..."
+        fullWidth
+        sx={{ m: "10px" }}
+      />
       <Tabs
         textColor="primary"
         indicatorColor="primary"
@@ -75,24 +76,20 @@ const ShoppingList = () => {
         rowGap="20px"
         columnGap="1%"
       >
-        {value === "all" &&
-          items.map((item) => (
-            <Item item={item} key={`${item.name}-${item.id}`} />
-          ))}
-        {value === "jazz" &&
-          JazzAlbums.map((item) => (
-            <Item item={item} key={`${item.name}-${item.id}`} />
-          ))}
-        {value === "soul" &&
-          SoulAlbums.map((item) => (
-            <Item item={item} key={`${item.name}-${item.id}`} />
-          ))}
-        {value === "pop" &&
-          PopAlbums.map((item) => (
-            <Item item={item} key={`${item.name}-${item.id}`} />
-          ))}
-        {value === "rock" &&
-          RockAlbums.map((item) => (
+        {items
+          .filter(
+            (item) =>
+              value === "all" ||
+              item.attributes.category.toLowerCase() === value
+          )
+          .filter(
+            (item) =>
+              searchTerm.trim() === "" ||
+              item.attributes.name
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase())
+          )
+          .map((item) => (
             <Item item={item} key={`${item.name}-${item.id}`} />
           ))}
       </Box>
