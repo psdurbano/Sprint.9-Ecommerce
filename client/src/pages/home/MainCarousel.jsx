@@ -1,4 +1,4 @@
-import { Box, IconButton } from "@mui/material";
+import { Box, IconButton, useMediaQuery } from "@mui/material";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
@@ -16,6 +16,7 @@ export const heroTextureImports = importAll(
 );
 
 const MainCarousel = () => {
+  const isNonMobile = useMediaQuery("(min-width:600px)");
   return (
     <Carousel
       infiniteLoop={true}
