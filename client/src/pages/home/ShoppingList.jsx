@@ -25,7 +25,7 @@ const ShoppingList = () => {
 
   async function getItems() {
     const items = await fetch(
-      "http://localhost:1337/api/items?populate=image",
+      "http://localhost:1337/api/items?populate=image&pagination[limit]=50",
       { method: "GET" }
     );
     const itemsJson = await items.json();
