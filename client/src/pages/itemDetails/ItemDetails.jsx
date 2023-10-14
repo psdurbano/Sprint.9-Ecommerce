@@ -12,7 +12,6 @@ const ItemDetails = () => {
   const dispatch = useDispatch();
   const { itemId } = useParams();
   const [value, setValue] = useState("description");
-  const [count, setCount] = useState(1);
   const [item, setItem] = useState(null);
   const [items, setItems] = useState([]);
 
@@ -83,6 +82,23 @@ const ItemDetails = () => {
             <Box m="65px 0 25px 0">
               <Typography variant="h3">{item.attributes.name}</Typography>
               <Typography>€ {item.attributes.price}</Typography>
+              {item.attributes.mediaCondition && (
+                <Typography>
+                  <strong>Media Condition:</strong>{" "}
+                  {item.attributes.mediaCondition}
+                </Typography>
+              )}
+              {item.attributes.sleeveCondition && (
+                <Typography>
+                  <strong>Sleeve Condition:</strong>{" "}
+                  {item.attributes.sleeveCondition}
+                </Typography>
+              )}
+              {item.attributes.tracklist && (
+                <Typography>
+                  <strong>Tracklist:</strong> {item.attributes.tracklist}
+                </Typography>
+              )}
               <Typography sx={{ mt: "20px" }}>
                 <ul style={{ listStyleType: "none", padding: 0 }}>
                   {item.attributes.longDescription &&
@@ -102,9 +118,7 @@ const ItemDetails = () => {
                   minWidth: "150px",
                   padding: "10px 40px",
                 }}
-                onClick={() =>
-                  dispatch(addToCart({ item: { ...item, count } }))
-                }
+                onClick={() => dispatch(addToCart({ item: { ...item } }))}
               >
                 ADD TO CART
               </Button>
@@ -129,7 +143,13 @@ const ItemDetails = () => {
       </Box>
       <Box display="flex" flexWrap="wrap" gap="15px">
         {value === "description" && (
-          <div>{item && item.attributes.shortDescription}</div>
+          <div>
+            {item &&
+              item.attributes.shortDescription &&
+              item.attributes.shortDescription
+                .split("\n")
+                .map((item, i) => <li key={i}>{item}</li>)}
+          </div>
         )}
         {value === "reviews" && <div>reviews</div>}
       </Box>

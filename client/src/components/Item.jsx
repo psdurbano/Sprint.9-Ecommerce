@@ -8,7 +8,6 @@ import { useNavigate } from "react-router-dom";
 const Item = ({ item, width }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [count, setCount] = useState(1);
   const [isHovered, setIsHovered] = useState(false);
   const {
     palette: { neutral },
@@ -56,11 +55,10 @@ const Item = ({ item, width }) => {
               alignItems="center"
               background={shades.neutral[100]}
               borderRadius="3px"
-            >
-            </Box>
+            ></Box>
             <Button
               onClick={() => {
-                dispatch(addToCart({ item: { ...item, count } }));
+                dispatch(addToCart({ item: { ...item } }));
               }}
               sx={{ backgroundColor: shades.primary[300], color: "white" }}
             >

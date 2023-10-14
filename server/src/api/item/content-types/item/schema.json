@@ -38,10 +38,28 @@
     "category": {
       "type": "enumeration",
       "enum": [
-        "jazz",
-        "soul",
-        "pop",
-        "rock"
+        "JAZZ",
+        "POP",
+        "SOUL",
+        "ROCK"
+      ]
+    },
+    "mediaCondition": {
+      "type": "enumeration",
+      "enum": [
+        "Mint (M)",
+        "Near Mint (NM or M-)",
+        "Very Good Plus (VG+)",
+        "Very Good (VG)"
+      ]
+    },
+    "sleeveCondition": {
+      "type": "enumeration",
+      "enum": [
+        "Mint (M)",
+        "Near Mint (NM or M-)",
+        "Very Good Plus (VG+)",
+        "Very Good (VG)"
       ]
     }
   }
