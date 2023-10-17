@@ -3,10 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import CloseIcon from "@mui/icons-material/Close";
 import styled from "@emotion/styled";
 import { shades } from "../../theme";
-import {
-  removeFromCart,
-  setIsCartOpen,
-} from "../../state";
+import { removeFromCart, setIsCartOpen } from "../../state";
 import { useNavigate } from "react-router-dom";
 
 const FlexBox = styled(Box)`
@@ -64,7 +61,10 @@ const CartMenu = () => {
                       alt={item?.name}
                       width="150px"
                       height="150px"
-                      src={`http://localhost:1337${item?.attributes?.image?.data?.attributes?.formats?.medium?.url}`}
+                      src={
+                        item?.attributes?.image?.data?.attributes?.formats
+                          ?.medium?.url
+                      }
                     />
                   </Box>
                   <Box flex="1 1 60%">
