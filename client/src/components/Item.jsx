@@ -8,13 +8,14 @@ import { useNavigate } from "react-router-dom";
 const Item = ({ item, width }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [count] = useState(1);
   const [isHovered, setIsHovered] = useState(false);
   const {
     palette: { neutral },
   } = useTheme();
 
   const { category, price, name, image } = item.attributes;
-  console.log(item);
+  console.log(item.attributes.category);
   const {
     data: {
       attributes: {
@@ -24,7 +25,6 @@ const Item = ({ item, width }) => {
       },
     },
   } = image;
-  console.log(image);
 
   return (
     <Box width={width}>
@@ -58,7 +58,7 @@ const Item = ({ item, width }) => {
             ></Box>
             <Button
               onClick={() => {
-                dispatch(addToCart({ item: { ...item } }));
+                dispatch(addToCart({ item: { ...item, count } }));
               }}
               sx={{ backgroundColor: shades.primary[300], color: "white" }}
             >
