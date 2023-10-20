@@ -21,6 +21,7 @@ const CartMenu = () => {
   const totalPrice = cart.reduce((total, item) => {
     return total + item.count * item.attributes.price;
   }, 0);
+  console.log(totalPrice);
 
   return (
     <Box
@@ -90,7 +91,7 @@ const CartMenu = () => {
                         alignItems="center"
                         border={`1.5px solid ${shades.neutral[500]}`}
                       >
-                        {" "}
+                        <Typography>{item.count}</Typography>
                       </Box>
 
                       {/* PRICE */}
@@ -109,7 +110,7 @@ const CartMenu = () => {
           <Box m="20px 0">
             <FlexBox m="20px 0">
               <Typography fontWeight="bold">SUBTOTAL</Typography>
-              <Typography fontWeight="bold">€ {totalPrice}</Typography>
+              <Typography fontWeight="bold">€{totalPrice}</Typography>
             </FlexBox>
             <Button
               sx={{
