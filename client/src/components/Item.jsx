@@ -15,6 +15,7 @@ const Item = ({ item, width }) => {
     palette: { neutral },
   } = useTheme();
 
+  //Extrae atributos del item
   const { category, price, name, image } = item.attributes;
 
   const {
@@ -27,6 +28,7 @@ const Item = ({ item, width }) => {
     },
   } = image;
 
+  //Verifica si el artículo está en el carrito
   const isItemInCart = cart.some((cartItem) => cartItem.id === item.id);
 
   return (
@@ -62,7 +64,7 @@ const Item = ({ item, width }) => {
             <Button
               onClick={() => {
                 if (!isItemInCart) {
-                  dispatch(addToCart({ item: { ...item, count: 1 } }));
+                  dispatch(addToCart({ item: { ...item, count: 1 } })); //Agrega el artículo al carrito
                 }
               }}
               sx={{
@@ -70,7 +72,7 @@ const Item = ({ item, width }) => {
                 color: "white",
                 cursor: isItemInCart ? "default" : "pointer",
               }}
-              disabled={isItemInCart} // Deshabilitar el botón si el artículo ya está en el carrito
+              disabled={isItemInCart} //Deshabilitar el botón si el artículo ya está en el carrito
             >
               {isItemInCart ? "In Cart" : "Add to Cart"}
             </Button>
