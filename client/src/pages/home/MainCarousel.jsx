@@ -1,28 +1,45 @@
-import { Box, IconButton, useMediaQuery } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { Box, IconButton, useMediaQuery, Typography } from "@mui/material";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-
-// imports all images from assets folder
-const importAll = (r) =>
-  r.keys().reduce((acc, item) => {
-    acc[item.replace("./", "")] = r(item);
-    return acc;
-  }, {});
-
-export const heroTextureImports = importAll(
-  require.context("../../assets", false, /\.(png|jpe?g|svg)$/)
-);
+import { Link } from "react-router-dom";
 
 const MainCarousel = () => {
-  const isNonMobile = useMediaQuery("(min-width:600px)");
+  const esMobile = useMediaQuery("(max-width:600px)");
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const importAll = (r) =>
+    r.keys().reduce((acc, item) => {
+      acc[item.replace("./", "")] = r(item);
+      return acc;
+    }, {});
+
+  const heroTextureImports = importAll(
+    require.context("../../assets", false, /\.(png|jpe?g|svg)$/)
+  );
+
+  const carouselImages = Object.values(heroTextureImports);
+
+  const genres = ["Rock", "Jazz", "Pop", "Soul"];
+  const subTitles = [
+    "Powerful beats and raw energy",
+    "Smooth rhythms and improvisation",
+    "Catchy melodies and vibrant tunes",
+    "Soulful vocals and emotional depth",
+  ];
+
   return (
     <Carousel
       infiniteLoop={true}
       showThumbs={false}
       showIndicators={false}
       showStatus={false}
+      selectedItem={activeIndex}
+      autoPlay={true}
+      interval={4000}
+      transitionTime={3000}
       renderArrowPrev={(onClickHandler, hasPrev, label) => (
         <IconButton
           onClick={onClickHandler}
@@ -33,6 +50,7 @@ const MainCarousel = () => {
             color: "#FFC709",
             padding: "5px",
             zIndex: "10",
+            display: esMobile ? "none" : "block",
           }}
         >
           <NavigateBeforeIcon sx={{ fontSize: 40 }} />
@@ -48,13 +66,14 @@ const MainCarousel = () => {
             color: "#FFC709",
             padding: "5px",
             zIndex: "10",
+            display: esMobile ? "none" : "block",
           }}
         >
           <NavigateNextIcon sx={{ fontSize: 40 }} />
         </IconButton>
       )}
     >
-      {Object.values(heroTextureImports).map((texture, index) => (
+      {carouselImages.map((texture, index) => (
         <Box key={`carousel-image-${index}`}>
           <img
             src={texture}
@@ -66,6 +85,44 @@ const MainCarousel = () => {
               backgroundAttachment: "fixed",
             }}
           />
+          <Box
+            position="absolute"
+            color="#FFC709"
+            top={esMobile ? "30%" : "30%"}
+            right={esMobile ? "15%" : "15%"}
+            transform={esMobile ? "translate(-50%, -50%)" : "none"}
+            textAlign={esMobile ? "center" : "left"}
+          >
+            <Typography
+              variant="h1"
+              sx={{
+                fontWeight: "bold",
+                textTransform: "uppercase",
+                fontSize: esMobile ? "2em" : "4em",
+                mb: esMobile ? 2 : 1,
+                color: "#FFC709",
+              }}
+            >
+              {genres[index]}
+            </Typography>
+
+            <Typography
+              variant="subtitle1"
+              color="#FFC709"
+              sx={{
+                textTransform: "uppercase",
+                fontSize: esMobile ? "1em" : "1.5em",
+                whiteSpace: "pre-line",
+              }}
+            >
+              {subTitles[index].split(" ").map((word, i) => (
+                <span key={i}>
+                  {word}
+                  <br />
+                </span>
+              ))}
+            </Typography>
+          </Box>
         </Box>
       ))}
     </Carousel>
