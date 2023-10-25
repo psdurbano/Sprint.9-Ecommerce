@@ -64,9 +64,9 @@ const ShoppingList = () => {
       >
         <Tab label="ALL" value="all" />
         <Tab label="JAZZ" value="jazz" />
-        <Tab label="SOUL" value="soul" />
         <Tab label="POP" value="pop" />
         <Tab label="ROCK" value="rock" />
+        <Tab label="SOUL" value="soul" />
       </Tabs>
       <Box
         margin="0 auto"

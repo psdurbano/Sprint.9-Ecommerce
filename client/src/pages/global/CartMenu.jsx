@@ -86,11 +86,7 @@ const CartMenu = () => {
 
                     {/* AMOUNT */}
                     <FlexBox m="15px 0">
-                      <Box
-                        display="flex"
-                        alignItems="center"
-                        border={`1.5px solid ${shades.neutral[500]}`}
-                      >
+                      <Box display="flex" alignItems="center">
                         <Typography>{item.count}</Typography>
                       </Box>
 

@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Box, IconButton, useMediaQuery, Typography } from "@mui/material";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import { Link } from "react-router-dom";
 
 const MainCarousel = () => {
   const esMobile = useMediaQuery("(max-width:600px)");
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex] = useState(0);
 
   const importAll = (r) =>
     r.keys().reduce((acc, item) => {
