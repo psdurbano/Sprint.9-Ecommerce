@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Box, Typography, useTheme, Button } from "@mui/material";
 import { shades } from "../theme";
 import { addToCart } from "../state";
@@ -8,14 +8,15 @@ import { useNavigate } from "react-router-dom";
 const Item = ({ item, width }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [count] = useState(1);
+  const cart = useSelector((state) => state.cart.cart);
+
   const [isHovered, setIsHovered] = useState(false);
   const {
     palette: { neutral },
   } = useTheme();
 
   const { category, price, name, image } = item.attributes;
-  console.log(item.attributes.category);
+
   const {
     data: {
       attributes: {
@@ -25,6 +26,8 @@ const Item = ({ item, width }) => {
       },
     },
   } = image;
+
+  const isItemInCart = cart.some((cartItem) => cartItem.id === item.id);
 
   return (
     <Box width={width}>
@@ -58,11 +61,18 @@ const Item = ({ item, width }) => {
             ></Box>
             <Button
               onClick={() => {
-                dispatch(addToCart({ item: { ...item, count } }));
+                if (!isItemInCart) {
+                  dispatch(addToCart({ item: { ...item, count: 1 } }));
+                }
               }}
-              sx={{ backgroundColor: shades.primary[300], color: "white" }}
+              sx={{
+                backgroundColor: isItemInCart ? "#999999" : shades.primary[500],
+                color: "white",
+                cursor: isItemInCart ? "default" : "pointer",
+              }}
+              disabled={isItemInCart} // Deshabilitar el botón si el artículo ya está en el carrito
             >
-              Add to Cart
+              {isItemInCart ? "In Cart" : "Add to Cart"}
             </Button>
           </Box>
         </Box>
