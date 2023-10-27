@@ -1,56 +1,81 @@
+import { Box, Typography, IconButton } from "@mui/material";
+import { Twitter, Instagram } from "@mui/icons-material";
 import { useTheme } from "@emotion/react";
-import { Box, Typography } from "@mui/material";
-import { shades } from "../../theme";
+import logo from "../../assets/logo/logo-imagen.png";
 
 function Footer() {
-  const {
-    palette: { primary },
-  } = useTheme();
+  const theme = useTheme();
+
+  const linkStyle = { color: "#FFC709" }; // Estilos comunes
+
+  const socialMediaLinks = [
+    {
+      icon: <Twitter />,
+      link: "https://twitter.com/allmyrecords",
+    },
+    {
+      icon: <Instagram />,
+      link: "https://www.instagram.com/allmyrecords/",
+    },
+  ];
+
   return (
-    <Box marginTop="70px" padding="40px 0" backgroundColor={primary.main}>
+    <Box
+      height="200px"
+      backgroundColor="#2D2C2F"
+      color={theme.palette.primary.main}
+      display="flex"
+      justifyContent="center"
+      alignItems="center"
+    >
       <Box
         width="80%"
-        margin="auto"
         display="flex"
-        color="#FFC709"
         justifyContent="space-between"
-        flexWrap="wrap"
-        rowGap="30px"
-        columnGap="clamp(20px, 30px, 40px)"
+        alignItems="center"
       >
-        <Box width="clamp(20%, 30%, 40%)">
-          <Typography
-            variant="h4"
-            fontWeight="bold"
-            mb="30px"
-            color={shades.secondary[500]}
-          >
-            ALLMYRECORDS
-          </Typography>
-          <div>Historia de AMR</div>
+        <Box display="flex" alignItems="center">
+          <img
+            src={logo}
+            alt="Logo"
+            style={{ height: "150px", width: "auto" }}
+          />
         </Box>
 
-        <Box>
-          <Typography variant="h4" fontWeight="bold" mb="30px">
-            About Us
-          </Typography>
-          <Typography mb="30px">Grading</Typography>
-          <Typography mb="30px">Shipping Terms</Typography>
-          <Typography mb="30px">Contact Us</Typography>
-          <Typography mb="30px">Returns & Refunds</Typography>
-        </Box>
+        <Box
+          display="flex"
+          flexDirection="column"
+          alignItems="flex-end"
+          justifyContent="center"
+          rowGap="10px"
+        >
+          {["About Us", "Contact Us", "Grading", "Shipping Terms"].map(
+            (item, index) => (
+              <Typography
+                key={index}
+                variant="h4"
+                fontWeight="bold"
+                fontSize="1.2em"
+                sx={linkStyle}
+              >
+                {item}
+              </Typography>
+            )
+          )}
 
-        <Box width="clamp(33%, 33%, 33%)">
-          <Typography variant="h4" fontWeight="bold" mb="30px">
-            Contact Us
-          </Typography>
-          <Typography mb="30px">
-            Paseo de la exposición 42, 08004, BCN
-          </Typography>
-          <Typography mb="30px" sx={{ wordWrap: "break-word" }}>
-            Email: hola@allmyrecords.store
-          </Typography>
-          <Typography mb="30px">(+34)722710007</Typography>
+          <Box display="flex">
+            {socialMediaLinks.map((item, index) => (
+              <IconButton
+                key={index}
+                href={item.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={linkStyle}
+              >
+                {item.icon}
+              </IconButton>
+            ))}
+          </Box>
         </Box>
       </Box>
     </Box>
