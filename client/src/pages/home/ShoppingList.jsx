@@ -23,18 +23,18 @@ const ShoppingList = () => {
     setSearchTerm(event.target.value);
   };
 
-  async function getItems() {
-    const items = await fetch(
-      "https://strapi-amr.onrender.com/api/items?populate=image&pagination[limit]=50",
-      { method: "GET" }
-    );
-    const itemsJson = await items.json();
-    dispatch(setItems(itemsJson.data));
-  }
-
   useEffect(() => {
+    async function getItems() {
+      const items = await fetch(
+        "https://strapi-amr.onrender.com/api/items?populate=image&pagination[limit]=50",
+        { method: "GET" }
+      );
+      const itemsJson = await items.json();
+      dispatch(setItems(itemsJson.data));
+    }
+
     getItems();
-  }, []);
+  }, [dispatch]);
 
   return (
     <Box width="80%" margin="80px auto">
@@ -46,7 +46,11 @@ const ShoppingList = () => {
         onChange={handleSearch}
         placeholder="Search..."
         fullWidth
-        sx={{ m: "10px" }}
+        sx={{
+          m: "10px",
+          transition: "transform 0.3s ease-in-out",
+          transform: searchTerm ? "translateX(0)" : "translateX(-50px)",
+        }}
       />
       <Tabs
         textColor="primary"
@@ -71,10 +75,15 @@ const ShoppingList = () => {
       <Box
         margin="0 auto"
         display="grid"
-        gridTemplateColumns="repeat(auto-fill, 400px)"
+        gridTemplateColumns={{
+          xs: "1fr",
+          sm: "repeat(auto-fill, minmax(300px, 1fr))",
+          md: "repeat(auto-fill, minmax(400px, 1fr))",
+        }}
         justifyContent="space-around"
         rowGap="20px"
         columnGap="1%"
+        p={1}
       >
         {items
           .filter(
@@ -90,7 +99,11 @@ const ShoppingList = () => {
                 .includes(searchTerm.toLowerCase())
           )
           .map((item) => (
-            <Item item={item} key={`${item.name}-${item.id}`} />
+            <Item
+              item={item}
+              key={`${item.name}-${item.id}`}
+              style={{ maxWidth: "100%" }}
+            />
           ))}
       </Box>
     </Box>
