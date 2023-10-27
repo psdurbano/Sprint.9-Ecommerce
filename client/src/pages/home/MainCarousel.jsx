@@ -35,10 +35,10 @@ const MainCarousel = () => {
       showThumbs={false}
       showIndicators={false}
       showStatus={false}
-      selectedItem={activeIndex}
       autoPlay={true}
       interval={4000}
       transitionTime={3000}
+      selectedItem={activeIndex}
       renderArrowPrev={(onClickHandler, hasPrev, label) => (
         <IconButton
           onClick={onClickHandler}
@@ -73,7 +73,12 @@ const MainCarousel = () => {
       )}
     >
       {carouselImages.map((texture, index) => (
-        <Box key={`carousel-image-${index}`}>
+        <Box
+          key={`carousel-image-${index}`}
+          style={{
+            transition: "opacity 0.5s", // Agregar una transición de opacidad
+          }}
+        >
           <img
             src={texture}
             alt={`carousel-${index}`}
@@ -82,13 +87,14 @@ const MainCarousel = () => {
               height: "700px",
               objectFit: "cover",
               backgroundAttachment: "fixed",
+              opacity: 1, // Asegurarse de que la opacidad inicial sea 1
             }}
           />
           <Box
             position="absolute"
             color="#FFC709"
-            top={esMobile ? "30%" : "30%"}
-            right={esMobile ? "15%" : "15%"}
+            top={esMobile ? "25%" : "25%"}
+            right={esMobile ? "10%" : "10%"}
             transform={esMobile ? "translate(-50%, -50%)" : "none"}
             textAlign={esMobile ? "center" : "left"}
           >
