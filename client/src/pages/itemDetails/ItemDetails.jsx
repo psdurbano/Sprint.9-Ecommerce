@@ -1,87 +1,83 @@
+import React, { useState, useEffect } from "react";
 import { Box, Button, Typography } from "@mui/material";
-import { shades } from "../../theme";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import { useParams, Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import Item from "../../components/Item";
+import { useDispatch, useSelector } from "react-redux";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import { addToCart } from "../../state";
-import { useDispatch, useSelector } from "react-redux";
+import Item from "../../components/Item";
+import { shades } from "../../theme";
+
+const apiUrl = "https://strapi-amr.onrender.com/api/items";
 
 const ItemDetails = () => {
-  const dispatch = useDispatch();
-
-  const { itemId } = useParams();
   const [value, setValue] = useState("description");
   const [item, setItem] = useState(null);
   const [items, setItems] = useState([]);
   const [isInWishlist, setIsInWishlist] = useState(false);
-
-  // Obtener el estado del carrito
+  const dispatch = useDispatch();
+  const { itemId } = useParams();
   const cart = useSelector((state) => state.cart.cart);
+  const isItemInCart = cart.some((cartItem) => cartItem.id === item?.id);
 
+  // Manejar errores en las peticiones
   const handleRequestError = (error) => {
     console.error("Error en la petición:", error);
   };
 
-  // Verificar si el artículo ya está en el carrito
-  const isItemInCart = cart.some((cartItem) => cartItem.id === item?.id);
-
   useEffect(() => {
-    async function getItem() {
+    // Función para obtener la información del item
+    const getItem = async () => {
       try {
-        const item = await fetch(
-          `https://strapi-amr.onrender.com/api/items/${itemId}?populate=image`,
-          { method: "GET" }
-        );
-        const itemJson = await item.json();
+        const itemResponse = await fetch(`${apiUrl}/${itemId}?populate=image`, {
+          method: "GET",
+        });
+        const itemJson = await itemResponse.json();
         setItem(itemJson.data);
       } catch (error) {
         handleRequestError(error);
       }
-    }
+    };
 
-    async function getItems() {
+    // Función para obtener la lista de items relacionados
+    const getItems = async () => {
       try {
-        const items = await fetch(
-          `https://strapi-amr.onrender.com/api/items?populate=image`,
-          { method: "GET" }
-        );
-        const itemsJson = await items.json();
+        const itemsResponse = await fetch(`${apiUrl}?populate=image`, {
+          method: "GET",
+        });
+        const itemsJson = await itemsResponse.json();
         setItems(itemsJson.data);
       } catch (error) {
         handleRequestError(error);
       }
-    }
+    };
 
+    // Llamar a las funciones para obtener los datos
     getItem();
     getItems();
   }, [itemId]);
 
-  const renderLink = (item, label) => {
-    return (
-      item && (
-        <Link
-          to={`/item/${item.id}`}
-          style={{ textDecoration: "none", color: "inherit" }}
-        >
-          <Typography variant="body1">{label}</Typography>
-        </Link>
-      )
+  const renderLink = (item, label) =>
+    item && (
+      <Link
+        to={`/item/${item.id}`}
+        style={{ textDecoration: "none", color: "inherit" }}
+      >
+        <Typography variant="body1">{label}</Typography>
+      </Link>
     );
-  };
 
-  const relatedItems = items.filter((relatedItem) => {
-    return (
+  // Filtrar items relacionados con la misma categoría
+  const relatedItems = items.filter(
+    (relatedItem) =>
       item &&
       item.attributes &&
       item.attributes.category &&
       relatedItem.attributes.category === item.attributes.category &&
       relatedItem.id !== item.id
-    );
-  });
+  );
 
   const currentIndex = items.findIndex((i) => i.id === parseInt(itemId));
   const prevItem = currentIndex > 0 ? items[currentIndex - 1] : null;
@@ -135,19 +131,12 @@ const ItemDetails = () => {
             </Box>
             <Box m="65px 0 25px 0">
               <Typography variant="h3">{item.attributes.name}</Typography>
-              <Typography variant="h5">€ {item.attributes.price}</Typography>
-              {item.attributes.mediaCondition && (
-                <Typography sx={{ mt: "1rem" }}>
-                  <strong>Media Condition:</strong>{" "}
-                  {item.attributes.mediaCondition}
-                </Typography>
-              )}
-              {item.attributes.sleeveCondition && (
-                <Typography>
-                  <strong>Sleeve Condition:</strong>{" "}
-                  {item.attributes.sleeveCondition}
-                </Typography>
-              )}
+              <Typography
+                variant="h5"
+                sx={{ fontWeight: "bold", fontSize: "1.2rem" }}
+              >
+                € {item.attributes.price}
+              </Typography>
               {item.attributes.tracklist && (
                 <Typography>
                   <strong>Tracklist:</strong> {item.attributes.tracklist}
@@ -200,7 +189,7 @@ const ItemDetails = () => {
       <Box m="20px 0">
         <Tabs value={value} onChange={handleChange}>
           <Tab label="DESCRIPTION" value="description" />
-          <Tab label="REVIEWS" value="reviews" />
+          <Tab label="CONDITION" value="condition" />
         </Tabs>
       </Box>
       <Box display="flex" flexWrap="wrap" gap="15px">
@@ -213,16 +202,32 @@ const ItemDetails = () => {
                 .map((item, i) => <li key={i}>{item}</li>)}
           </div>
         )}
-        {value === "reviews" && <div>reviews</div>}
+        {value === "condition" && (
+          <div>
+            {item && item.attributes.mediaCondition && (
+              <Typography>
+                <strong>Media Condition:</strong>{" "}
+                {item.attributes.mediaCondition}
+              </Typography>
+            )}
+            {item && item.attributes.sleeveCondition && (
+              <Typography>
+                <strong>Sleeve Condition:</strong>{" "}
+                {item.attributes.sleeveCondition}
+              </Typography>
+            )}
+          </div>
+        )}
       </Box>
       {relatedItems.length > 0 && (
-        <Box mt="50px" width="100%">
+        <Box mt="40px" width="100%">
           <Typography variant="h3" fontWeight="bold">
             Related Products
           </Typography>
           <Box
             mt="20px"
             display="flex"
+            width="90%"
             flexWrap="wrap"
             columnGap="1.33%"
             justifyContent="space-between"
