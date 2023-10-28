@@ -38,7 +38,7 @@ const Item = ({ item, width }) => {
       style={{
         transition: "transform 0.3s, box-shadow 0.3s",
         transform: isHovered ? "scale(1.05)" : "scale(1)",
-        boxShadow: isHovered ? "0 2px 4px rgba(0, 0, 0, 0.1)" : "none",
+        boxShadow: isHovered ? "0 1px 2px rgba(0, 0, 0, 0.05)" : "none",
       }}
     >
       <img
@@ -53,7 +53,7 @@ const Item = ({ item, width }) => {
         display={isHovered ? "flex" : "none"}
         justifyContent="space-between"
         position="absolute"
-        left="65%"
+        left="55%"
         top="-10%"
         width="100%"
         padding="0 5%"
