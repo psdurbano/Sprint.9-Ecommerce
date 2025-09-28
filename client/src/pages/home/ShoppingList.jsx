@@ -23,18 +23,32 @@ const ShoppingList = () => {
     setSearchTerm(event.target.value);
   };
 
-  useEffect(() => {
-    async function getItems() {
-      const items = await fetch(
-        "https://strapi-amr.onrender.com/api/items?populate=image&pagination[limit]=50",
+useEffect(() => {
+  async function getItems() {
+    try {
+      const response = await fetch(
+        "https://sprint9-ecommerce-production.up.railway.app/api/items?populate=image&pagination[limit]=50",
         { method: "GET" }
       );
-      const itemsJson = await items.json();
-      dispatch(setItems(itemsJson.data));
+      
+      console.log("Response status:", response.status);
+      const itemsJson = await response.json();
+      console.log("API Response:", itemsJson);
+      
+      // Verifica la estructura antes de dispatch
+      if (itemsJson.data && Array.isArray(itemsJson.data)) {
+        dispatch(setItems(itemsJson.data));
+      } else {
+        console.error("Estructura inesperada:", itemsJson);
+        dispatch(setItems([])); // Array vacío como fallback
+      }
+    } catch (error) {
+      console.error("Error fetching items:", error);
+      dispatch(setItems([]));
     }
-
-    getItems();
-  }, [dispatch]);
+  }
+  getItems();
+}, [dispatch]);
 
   return (
     <Box width="80%" margin="80px auto">

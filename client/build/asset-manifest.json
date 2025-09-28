@@ -1,0 +1,19 @@
+{
+  "files": {
+    "main.css": "/static/css/main.847bdbc5.css",
+    "main.js": "/static/js/main.1653b6da.js",
+    "static/media/4-aretha-franklin.jpg": "/static/media/4-aretha-franklin.84f5bdf634873aae0cb7.jpg",
+    "static/media/1-david-bowie.jpg": "/static/media/1-david-bowie.bcfb7a0d5726c073a118.jpg",
+    "static/media/2-john coltrane.jpg": "/static/media/2-john coltrane.098a87eba84ee4881606.jpg",
+    "static/media/3-madonna.jpg": "/static/media/3-madonna.13f733e95594fa657ac1.jpg",
+    "static/media/logo-imagen.png": "/static/media/logo-imagen.c51f8f07d745cbd19ba1.png",
+    "static/media/logo.png": "/static/media/logo.311612f0a91f705f84a2.png",
+    "index.html": "/index.html",
+    "main.847bdbc5.css.map": "/static/css/main.847bdbc5.css.map",
+    "main.1653b6da.js.map": "/static/js/main.1653b6da.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.847bdbc5.css",
+    "static/js/main.1653b6da.js"
+  ]
+}

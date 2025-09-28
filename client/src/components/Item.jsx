@@ -6,22 +6,48 @@ import { addToCart } from "../state";
 import { useNavigate } from "react-router-dom";
 
 const Item = ({ item, width }) => {
+  // ✅ HOOKS SIEMPRE AL PRINCIPIO - MISMO ORDEN
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const cart = useSelector((state) => state.cart.cart);
   const [isHovered, setIsHovered] = useState(false);
-  const isItemInCart = cart.some((cartItem) => cartItem.id === item.id);
 
-  const { category, price, name, image } = item.attributes;
-  const {
-    data: {
-      attributes: {
-        formats: {
-          medium: { url },
-        },
-      },
-    },
-  } = image;
+  // ✅ VALIDACIÓN DESPUÉS DE LOS HOOKS
+  if (!item || !item.attributes) {
+    return (
+      <Box width={width || "300px"} position="relative">
+        <Box 
+          width="380px" 
+          height="380px" 
+          display="flex" 
+          alignItems="center" 
+          justifyContent="center"
+          backgroundColor="#f5f5f5"
+        >
+          <Typography>Loading...</Typography>
+        </Box>
+        <Box mt="3px">
+          <Typography variant="subtitle2" color={shades.neutral.dark}>
+            Loading...
+          </Typography>
+          <Typography>Loading item...</Typography>
+          <Typography fontWeight="bold">€ --</Typography>
+        </Box>
+      </Box>
+    );
+  }
+
+  // ✅ DESTRUCTURING SEGURO DESPUÉS DE LA VALIDACIÓN
+  const isItemInCart = cart.some((cartItem) => cartItem.id === item.id);
+  const { 
+    category = "Unknown", 
+    price = 0, 
+    name = "Unnamed Item", 
+    image = {} 
+  } = item.attributes;
+
+  // ✅ VALIDACIÓN SEGURA PARA LA IMAGEN
+  const imageUrl = image?.data?.attributes?.formats?.medium?.url || "/default-image.jpg";
 
   const handleAddToCart = () => {
     if (!isItemInCart) {
@@ -42,12 +68,12 @@ const Item = ({ item, width }) => {
       }}
     >
       <img
-        alt={item.name}
+        alt={name}
         width="380px"
         height="380px"
-        src={url}
+        src={imageUrl}
         onClick={() => navigate(`/item/${item.id}`)}
-        style={{ cursor: "pointer" }}
+        style={{ cursor: "pointer", objectFit: "cover" }}
       />
       <Box
         display={isHovered ? "flex" : "none"}
