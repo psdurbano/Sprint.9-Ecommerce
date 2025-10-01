@@ -1,23 +1,13 @@
+import React from "react";
 import { Box, Typography, IconButton } from "@mui/material";
 import { Twitter, Instagram } from "@mui/icons-material";
 import { useTheme } from "@emotion/react";
 import logo from "../../assets/logo/logo-imagen.png";
+import { Link } from "react-router-dom";
 
 function Footer() {
   const theme = useTheme();
-
-  const linkStyle = { color: "#FFC709" }; // Estilos comunes
-
-  const socialMediaLinks = [
-    {
-      icon: <Twitter />,
-      link: "https://twitter.com/allmyrecords",
-    },
-    {
-      icon: <Instagram />,
-      link: "https://www.instagram.com/allmyrecords/",
-    },
-  ];
+  const linkColor = "#FFC709";
 
   return (
     <Box
@@ -34,6 +24,7 @@ function Footer() {
         justifyContent="space-between"
         alignItems="center"
       >
+        {/* Logo */}
         <Box display="flex" alignItems="center">
           <img
             src={logo}
@@ -42,6 +33,7 @@ function Footer() {
           />
         </Box>
 
+        {/* Links */}
         <Box
           display="flex"
           flexDirection="column"
@@ -50,27 +42,70 @@ function Footer() {
           rowGap="10px"
         >
           {["About Us", "Contact Us", "Grading", "Shipping Terms"].map(
-            (item, index) => (
-              <Typography
-                key={index}
-                variant="h4"
-                fontWeight="bold"
-                fontSize="1.2em"
-                sx={linkStyle}
-              >
-                {item}
-              </Typography>
-            )
+            (item, index) => {
+              const isLink = item === "About Us";
+              const content = (
+                <Typography
+                  variant="h4"
+                  fontWeight="bold"
+                  fontSize="1.2em"
+                  sx={{
+                    color: linkColor,
+                    borderRadius: "8px",
+                    px: 2,
+                    py: 0.5,
+                    cursor: isLink ? "pointer" : "default",
+                    textDecoration: "none",
+                    transition: "background-color 0.2s ease, transform 0.2s ease",
+                    "&:hover": {
+                      backgroundColor: "rgba(255, 199, 9, 0.1)",
+                      transform: "scale(1.1)",
+                    },
+                  }}
+                >
+                  {item}
+                </Typography>
+              );
+              if (isLink) {
+                return (
+                  <Link
+                    key={index}
+                    to="/about-us"
+                    style={{ textDecoration: "none" }}
+                  >
+                    {content}
+                  </Link>
+                );
+              }
+              return <Box key={index}>{content}</Box>;
+            }
           )}
 
-          <Box display="flex">
-            {socialMediaLinks.map((item, index) => (
+          {/* Socials */}
+          <Box display="flex" columnGap="10px">
+            {[
+              {
+                icon: <Twitter />,
+                link: "https://twitter.com/allmyrecords",
+              },
+              {
+                icon: <Instagram />,
+                link: "https://www.instagram.com/allmyrecords/",
+              },
+            ].map((item, index) => (
               <IconButton
                 key={index}
                 href={item.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                sx={linkStyle}
+                sx={{
+                  color: linkColor,
+                  transition: "background-color 0.2s ease, transform 0.2s ease",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 199, 9, 0.1)",
+                    transform: "scale(1.1)",
+                  },
+                }}
               >
                 {item.icon}
               </IconButton>

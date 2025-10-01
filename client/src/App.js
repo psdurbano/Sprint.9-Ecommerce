@@ -8,14 +8,13 @@ import CartMenu from "./pages/global/CartMenu";
 import Checkout from "./pages/checkout/Checkout";
 import Confirmation from "./pages/checkout/Confirmation";
 import SignupForm from "./pages/global/SignUpForm";
+import AboutUs from "./pages/info/AboutUs"; // ← AQUÍ
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [pathname]);
-
   return null;
 };
 
@@ -26,11 +25,12 @@ function App() {
         <Navbar />
         <ScrollToTop />
         <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/SignUp" element={<SignupForm />} />
-          <Route path="item/:itemId" element={<ItemDetails />} />
-          <Route path="checkout" element={<Checkout />} />
-          <Route path="checkout/success" element={<Confirmation />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/SignUp" element={<SignupForm />} />
+          <Route path="/item/:itemId" element={<ItemDetails />} />
+          <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout/success" element={<Confirmation />} />
+          <Route path="/about-us" element={<AboutUs />} /> {/* ← AQUÍ */}
         </Routes>
         <CartMenu />
         <Footer />

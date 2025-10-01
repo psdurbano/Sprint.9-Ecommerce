@@ -1,113 +1,218 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Box, Typography, Button } from "@mui/material";
-import { shades } from "../theme";
+import { Box, Typography } from "@mui/material";
 import { addToCart } from "../state";
 import { useNavigate } from "react-router-dom";
 
-const Item = ({ item, width }) => {
-  // ✅ HOOKS SIEMPRE AL PRINCIPIO - MISMO ORDEN
+const Item = ({ item, style }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const cart = useSelector((state) => state.cart.cart);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // ✅ VALIDACIÓN DESPUÉS DE LOS HOOKS
-  if (!item || !item.attributes) {
+  const handleAddToCart = useCallback((e) => {
+    e.stopPropagation();
+    if (item?.attributes) {
+      const isItemInCart = cart.some((cartItem) => cartItem.id === item.id);
+      if (!isItemInCart) {
+        dispatch(addToCart({ item: { ...item, count: 1 } }));
+      }
+    }
+  }, [cart, dispatch, item]);
+
+  const handleNavigate = useCallback(() => {
+    if (item?.id) {
+      navigate(`/item/${item.id}`);
+    }
+  }, [navigate, item]);
+
+  const { itemData, isItemInCart, imageUrl } = useMemo(() => {
+    if (!item?.attributes) {
+      return { itemData: null, isItemInCart: false, imageUrl: "" };
+    }
+
+    const { category = "Unknown", price = 0, name = "Unnamed Item", image } = item.attributes;
+    
+    const imageUrl = image?.data?.attributes?.formats?.medium?.url 
+      ? `https://sprint9-ecommerce-production.up.railway.app${image.data.attributes.formats.medium.url}`
+      : "/default-image.jpg";
+
+    const isInCart = cart.some((cartItem) => cartItem.id === item.id);
+
+    return {
+      itemData: { category, price, name },
+      isItemInCart: isInCart,
+      imageUrl
+    };
+  }, [item, cart]);
+
+  if (!item?.attributes) {
     return (
-      <Box width={width || "300px"} position="relative">
-        <Box 
-          width="380px" 
-          height="380px" 
-          display="flex" 
-          alignItems="center" 
-          justifyContent="center"
-          backgroundColor="#f5f5f5"
-        >
-          <Typography>Loading...</Typography>
-        </Box>
-        <Box mt="3px">
-          <Typography variant="subtitle2" color={shades.neutral.dark}>
-            Loading...
-          </Typography>
-          <Typography>Loading item...</Typography>
-          <Typography fontWeight="bold">€ --</Typography>
-        </Box>
+      <Box 
+        sx={{ 
+          maxWidth: { xs: '100%', sm: '400px' }, 
+          margin: '0 auto',
+          ...style 
+        }}
+      >
+        <Box
+          sx={{
+            backgroundColor: '#f8f8f8',
+            aspectRatio: '1 / 1',
+            width: '100%',
+          }}
+        />
       </Box>
     );
   }
 
-  // ✅ DESTRUCTURING SEGURO DESPUÉS DE LA VALIDACIÓN
-  const isItemInCart = cart.some((cartItem) => cartItem.id === item.id);
-  const { 
-    category = "Unknown", 
-    price = 0, 
-    name = "Unnamed Item", 
-    image = {} 
-  } = item.attributes;
+  const { category, price, name } = itemData;
 
-  // ✅ VALIDACIÓN SEGURA PARA LA IMAGEN
-  const imageUrl = image?.data?.attributes?.formats?.medium?.url || "/default-image.jpg";
-
-  const handleAddToCart = () => {
-    if (!isItemInCart) {
-      dispatch(addToCart({ item: { ...item, count: 1 } }));
+  const styles = {
+    container: {
+      maxWidth: { xs: '100%', sm: '400px' },
+      margin: '0 auto',
+      cursor: 'pointer',
+      position: 'relative',
+      transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+      ...style
+    },
+    imageContainer: {
+      aspectRatio: '1 / 1',
+      backgroundColor: '#f8f8f8',
+      marginBottom: '20px',
+      overflow: 'hidden',
+      position: 'relative',
+    },
+    image: {
+      width: '100%',
+      height: '100%',
+      objectFit: 'cover',
+      opacity: imageLoaded ? 1 : 0,
+      transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+      filter: isHovered ? 'grayscale(100%)' : 'grayscale(0%)',
+    },
+    cartStatus: {
+      position: 'absolute',
+      bottom: '12px',
+      left: '12px',
+      fontSize: '11px',
+      fontWeight: 400,
+      color: '#fff',
+      backgroundColor: 'rgba(0,0,0,0.8)',
+      padding: '6px 12px',
+      letterSpacing: '0.5px',
+      textTransform: 'uppercase',
+      fontFamily: 'system-ui, sans-serif',
+      opacity: isItemInCart ? 1 : 0,
+      transition: 'opacity 0.3s ease',
+    },
+    category: {
+      fontSize: '11px',
+      fontWeight: 400,
+      color: '#888',
+      letterSpacing: '0.5px',
+      textTransform: 'uppercase',
+      marginBottom: '6px',
+      fontFamily: 'system-ui, sans-serif',
+    },
+    name: {
+      fontSize: '14px',
+      fontWeight: 400,
+      color: '#000',
+      lineHeight: 1.4,
+      marginBottom: '8px',
+      fontFamily: 'system-ui, sans-serif',
+      letterSpacing: '-0.2px',
+    },
+    bottomRow: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    price: {
+      fontSize: '14px',
+      fontWeight: 400,
+      color: '#000',
+      fontFamily: 'system-ui, sans-serif',
+    },
+    addButton: {
+      color: '#000',
+      fontSize: '11px',
+      fontWeight: 400,
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px',
+      padding: 0,
+      border: 'none',
+      backgroundColor: 'transparent',
+      cursor: 'pointer',
+      opacity: isItemInCart ? 0 : 1,
+      transition: 'all 0.3s ease',
+      fontFamily: 'system-ui, sans-serif',
+      position: 'relative',
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        bottom: '-2px',
+        left: 0,
+        width: '0%',
+        height: '1px',
+        backgroundColor: '#000',
+        transition: 'width 0.3s ease',
+      },
+      '&:hover::after': {
+        width: '100%',
+      },
     }
   };
 
   return (
     <Box
-      width={width}
-      position="relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      style={{
-        transition: "transform 0.3s, box-shadow 0.3s",
-        transform: isHovered ? "scale(1.05)" : "scale(1)",
-        boxShadow: isHovered ? "0 1px 2px rgba(0, 0, 0, 0.05)" : "none",
-      }}
+      onClick={handleNavigate}
+      sx={styles.container}
     >
-      <img
-        alt={name}
-        width="380px"
-        height="380px"
-        src={imageUrl}
-        onClick={() => navigate(`/item/${item.id}`)}
-        style={{ cursor: "pointer", objectFit: "cover" }}
-      />
-      <Box
-        display={isHovered ? "flex" : "none"}
-        justifyContent="space-between"
-        position="absolute"
-        left="55%"
-        top="-10%"
-        width="100%"
-        padding="0 5%"
-        background={shades.neutral[100]}
-        borderRadius="3px"
-        style={{ position: "relative" }}
-      >
-        <Button
-          onClick={handleAddToCart}
-          sx={{
-            backgroundColor: isItemInCart ? "#999999" : shades.primary[500],
-            color: "white",
-            cursor: isItemInCart ? "default" : "pointer",
-          }}
-          disabled={isItemInCart}
-        >
-          {isItemInCart ? "In Cart" : "Add to Cart"}
-        </Button>
+      <Box sx={styles.imageContainer}>
+        <Box
+          component="img"
+          alt={name}
+          src={imageUrl}
+          onLoad={() => setImageLoaded(true)}
+          sx={styles.image}
+        />
+        
+        {/* Cart Status Badge */}
+        <Box sx={styles.cartStatus}>
+          In Cart
+        </Box>
       </Box>
 
-      <Box mt="3px">
-        <Typography variant="subtitle2" color={shades.neutral.dark}>
-          {category
-            .replace(/([A-Z])/g, " $1")
-            .replace(/^./, (str) => str.toUpperCase())}
+      <Box>
+        <Typography sx={styles.category}>
+          {category}
         </Typography>
-        <Typography>{name}</Typography>
-        <Typography fontWeight="bold">€ {price}</Typography>
+        
+        <Typography sx={styles.name}>
+          {name}
+        </Typography>
+        
+        <Box sx={styles.bottomRow}>
+          <Typography sx={styles.price}>
+            €{price.toFixed(2)}
+          </Typography>
+          
+          {!isItemInCart && (
+            <Box 
+              component="button"
+              onClick={handleAddToCart}
+              sx={styles.addButton}
+            >
+              Add to Cart
+            </Box>
+          )}
+        </Box>
       </Box>
     </Box>
   );
