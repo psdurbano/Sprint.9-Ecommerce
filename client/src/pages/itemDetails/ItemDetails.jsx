@@ -7,7 +7,7 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import { addToCart } from "../../state";
 import Item from "../../components/Item";
 
-const apiUrl = "https://sprint9-ecommerce-production.up.railway.app/api/items";
+const apiUrl = `${process.env.REACT_APP_API_URL || "http://localhost:1337"}/api/items`;
 
 const ItemDetails = () => {
   const [value, setValue] = useState("description");
@@ -38,9 +38,10 @@ const ItemDetails = () => {
       try {
         const itemsResponse = await fetch(`${apiUrl}?populate=image`);
         const itemsJson = await itemsResponse.json();
-        setItems(itemsJson.data);
+        setItems(itemsJson.data || []);
       } catch (error) {
         handleRequestError(error);
+        setItems([]);
       }
     };
 
@@ -52,7 +53,8 @@ const ItemDetails = () => {
     if (!item?.attributes?.image?.data?.attributes?.formats?.medium?.url) {
       return "/default-image.jpg";
     }
-    return `https://sprint9-ecommerce-production.up.railway.app${item.attributes.image.data.attributes.formats.medium.url}`;
+    const baseUrl = process.env.REACT_APP_UPLOADS_URL || "http://localhost:1337";
+    return `${baseUrl}${item.attributes.image.data.attributes.formats.medium.url}`;
   };
 
   const renderLink = (item, label) =>
@@ -62,16 +64,16 @@ const ItemDetails = () => {
       </Link>
     );
 
-  const relatedItems = items.filter(
+  const relatedItems = Array.isArray(items) ? items.filter(
     (relatedItem) =>
       item &&
       item.attributes &&
       item.attributes.category &&
       relatedItem?.attributes?.category === item.attributes.category &&
       relatedItem.id !== item.id
-  );
+  ) : [];
 
-  const currentIndex = items.findIndex((i) => i.id === parseInt(itemId));
+  const currentIndex = Array.isArray(items) ? items.findIndex((i) => i.id === parseInt(itemId)) : -1;
   const prevItem = currentIndex > 0 ? items[currentIndex - 1] : null;
   const nextItem = currentIndex < items.length - 1 ? items[currentIndex + 1] : null;
 
@@ -133,7 +135,6 @@ const ItemDetails = () => {
 
   return (
     <Box width="80%" m="80px auto">
-      {/* Imagen y detalles */}
       <Box display="flex" flexWrap="wrap" columnGap="40px">
         <Box flex="1 1 40%" mb="40px">
           <img
@@ -198,7 +199,6 @@ const ItemDetails = () => {
         </Box>
       </Box>
 
-      {/* Tabs */}
       <Box m="20px 0">
         <Tabs value={value} onChange={handleChange}>
           <Tab label="DESCRIPTION" value="description" />
@@ -229,7 +229,6 @@ const ItemDetails = () => {
         )}
       </Box>
 
-      {/* Related Products usando Grid */}
       {relatedItems.length > 0 && (
         <Box mt="40px" width="100%">
           <Typography variant="h3" fontWeight="bold">
@@ -246,9 +245,9 @@ const ItemDetails = () => {
               <Grid
                 item
                 key={relatedItem.id}
-                xs={12} // 1 por fila en móvil
-                sm={6}  // 2 por fila en tablet
-                md={3}  // 4 por fila en escritorio
+                xs={12}
+                sm={6}
+                md={3}
                 sx={{ display: "flex", justifyContent: "center" }}
               >
                 <Item item={relatedItem} />

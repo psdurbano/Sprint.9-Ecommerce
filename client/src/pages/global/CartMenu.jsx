@@ -18,19 +18,18 @@ const CartMenu = () => {
   const cart = useSelector((state) => state.cart.cart);
   const isCartOpen = useSelector((state) => state.cart.isCartOpen);
 
-  // Log cart data for debugging
-  console.log("Cart data:", JSON.stringify(cart, null, 2));
-
   const totalPrice = cart.reduce((total, item) => {
     return total + (item?.count || 0) * (item?.attributes?.price || 0);
   }, 0);
 
-  // Get image URL with debugging
   const getImageUrl = (item) => {
+    const baseUrl = process.env.REACT_APP_UPLOADS_URL || "http://localhost:1337";
     const imageUrl = item?.attributes?.image?.data?.attributes?.formats?.medium?.url
-      ? `https://sprint9-ecommerce-production.up.railway.app${item.attributes.image.data.attributes.formats.medium.url}`
+      ? `${baseUrl}${item.attributes.image.data.attributes.formats.medium.url}`
+      : item?.attributes?.image?.data?.attributes?.url
+      ? `${baseUrl}${item.attributes.image.data.attributes.url}`
       : "/default-image.jpg";
-    console.log(`Image URL for ${item?.attributes?.name || "item"}: ${imageUrl}`);
+    
     return imageUrl;
   };
 
@@ -55,7 +54,6 @@ const CartMenu = () => {
         backgroundColor="white"
       >
         <Box padding="30px" overflow="auto" height="100%">
-          {/* HEADER */}
           <FlexBox mb="15px">
             <Typography variant="h3">SHOPPING BAG ({cart?.length || 0})</Typography>
             <IconButton
@@ -66,7 +64,6 @@ const CartMenu = () => {
             </IconButton>
           </FlexBox>
 
-          {/* CART LIST */}
           <Box>
             {cart?.length ? (
               cart.map((item) => (
@@ -81,7 +78,6 @@ const CartMenu = () => {
                         style={{ objectFit: "cover" }}
                         loading="lazy"
                         onError={(e) => {
-                          console.error(`Failed to load image for ${item?.attributes?.name || "item"}: ${e.target.src}`);
                           e.target.src = "/default-image.jpg";
                         }}
                       />
@@ -115,7 +111,6 @@ const CartMenu = () => {
             )}
           </Box>
 
-          {/* SUBTOTAL AND CHECKOUT */}
           <Box m="20px 0">
             <FlexBox m="20px 0">
               <Typography fontWeight="bold">SUBTOTAL</Typography>

@@ -34,8 +34,11 @@ const Item = ({ item, style }) => {
 
     const { category = "Unknown", price = 0, name = "Unnamed Item", image } = item.attributes;
     
+    const baseUrl = process.env.REACT_APP_UPLOADS_URL || "http://localhost:1337";
     const imageUrl = image?.data?.attributes?.formats?.medium?.url 
-      ? `https://sprint9-ecommerce-production.up.railway.app${image.data.attributes.formats.medium.url}`
+      ? `${baseUrl}${image.data.attributes.formats.medium.url}`
+      : image?.data?.attributes?.url
+      ? `${baseUrl}${image.data.attributes.url}`
       : "/default-image.jpg";
 
     const isInCart = cart.some((cartItem) => cartItem.id === item.id);
@@ -183,7 +186,6 @@ const Item = ({ item, style }) => {
           sx={styles.image}
         />
         
-        {/* Cart Status Badge */}
         <Box sx={styles.cartStatus}>
           In Cart
         </Box>

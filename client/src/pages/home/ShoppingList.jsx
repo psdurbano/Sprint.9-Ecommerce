@@ -13,8 +13,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Item from "../../components/Item";
 import { setItems } from "../../state";
 
-const API_URL =
-  "https://sprint9-ecommerce-production.up.railway.app/api/items?populate=image&pagination[limit]=50";
+const API_URL = `${process.env.REACT_APP_API_URL || "http://localhost:1337"}/api/items?populate=image&pagination[limit]=50`;
 
 const CATEGORIES = [
   { label: "ALL", value: "all" },
@@ -56,7 +55,6 @@ const ShoppingList = () => {
     });
   }, [items, selectedCategory, searchTerm]);
 
-  // Escucha cambios de categoría desde el carousel
   useEffect(() => {
     const handleCategoryEvent = (e) => {
       if (e?.detail?.category) {
