@@ -13,7 +13,9 @@ import { useDispatch, useSelector } from "react-redux";
 import Item from "../../components/Item";
 import { setItems } from "../../state";
 
-const API_URL = `${process.env.REACT_APP_API_URL || "http://localhost:1337"}/api/items?populate=image&pagination[limit]=50`;
+const API_URL = `${
+  process.env.REACT_APP_API_URL || "http://localhost:1337"
+}/api/items?populate=image&pagination[limit]=-1`;
 
 const CATEGORIES = [
   { label: "ALL", value: "all" },
@@ -62,7 +64,8 @@ const ShoppingList = () => {
       }
     };
     window.addEventListener("categoryChange", handleCategoryEvent);
-    return () => window.removeEventListener("categoryChange", handleCategoryEvent);
+    return () =>
+      window.removeEventListener("categoryChange", handleCategoryEvent);
   }, []);
 
   useEffect(() => {
