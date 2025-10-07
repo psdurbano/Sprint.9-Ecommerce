@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { Box, Typography } from "@mui/material";
 import { addToCart } from "../state";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl } from "../utils/imageHelper";
 
 const Item = ({ item, style }) => {
   const navigate = useNavigate();
@@ -32,14 +33,10 @@ const Item = ({ item, style }) => {
       return { itemData: null, isItemInCart: false, imageUrl: "" };
     }
 
-    const { category = "Unknown", price = 0, name = "Unnamed Item", image } = item.attributes;
+    const { category = "Unknown", price = 0, name = "Unnamed Item" } = item.attributes;
     
-    const baseUrl = process.env.REACT_APP_UPLOADS_URL || "http://localhost:1337";
-    const imageUrl = image?.data?.attributes?.formats?.medium?.url 
-      ? `${baseUrl}${image.data.attributes.formats.medium.url}`
-      : image?.data?.attributes?.url
-      ? `${baseUrl}${image.data.attributes.url}`
-      : "/default-image.jpg";
+    // Usar el helper function para obtener la URL correcta
+    const imageUrl = getImageUrl(item);
 
     const isInCart = cart.some((cartItem) => cartItem.id === item.id);
 

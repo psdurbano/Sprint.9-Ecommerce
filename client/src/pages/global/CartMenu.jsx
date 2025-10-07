@@ -5,6 +5,7 @@ import styled from "@emotion/styled";
 import { shades } from "../../theme";
 import { removeFromCart, setIsCartOpen } from "../../state";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl } from "../../utils/imageHelper";
 
 const FlexBox = styled(Box)`
   display: flex;
@@ -21,17 +22,6 @@ const CartMenu = () => {
   const totalPrice = cart.reduce((total, item) => {
     return total + (item?.count || 0) * (item?.attributes?.price || 0);
   }, 0);
-
-  const getImageUrl = (item) => {
-    const baseUrl = process.env.REACT_APP_UPLOADS_URL || "http://localhost:1337";
-    const imageUrl = item?.attributes?.image?.data?.attributes?.formats?.medium?.url
-      ? `${baseUrl}${item.attributes.image.data.attributes.formats.medium.url}`
-      : item?.attributes?.image?.data?.attributes?.url
-      ? `${baseUrl}${item.attributes.image.data.attributes.url}`
-      : "/default-image.jpg";
-    
-    return imageUrl;
-  };
 
   return (
     <Box

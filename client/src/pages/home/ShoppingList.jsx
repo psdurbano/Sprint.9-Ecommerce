@@ -12,10 +12,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import Item from "../../components/Item";
 import { setItems } from "../../state";
-
-const API_URL = `${
-  process.env.REACT_APP_API_URL || "http://localhost:1337"
-}/api/items?populate=image&pagination[limit]=-1`;
+import { API_ENDPOINTS } from "../../utils/apiConfig";
 
 const CATEGORIES = [
   { label: "ALL", value: "all" },
@@ -72,7 +69,7 @@ const ShoppingList = () => {
     const fetchItems = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(API_URL);
+        const response = await fetch(`${API_ENDPOINTS.items}?populate=image&pagination[limit]=-1`);
         const data = await response.json();
         if (data?.data && Array.isArray(data.data)) {
           dispatch(setItems(data.data));

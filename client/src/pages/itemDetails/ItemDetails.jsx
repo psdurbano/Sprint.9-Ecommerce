@@ -6,8 +6,8 @@ import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlin
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import { addToCart } from "../../state";
 import Item from "../../components/Item";
-
-const apiUrl = `${process.env.REACT_APP_API_URL || "http://localhost:1337"}/api/items`;
+import { getImageUrl } from "../../utils/imageHelper";
+import { API_ENDPOINTS } from "../../utils/apiConfig";
 
 const ItemDetails = () => {
   const [value, setValue] = useState("description");
@@ -26,7 +26,7 @@ const ItemDetails = () => {
   useEffect(() => {
     const getItem = async () => {
       try {
-        const itemResponse = await fetch(`${apiUrl}/${itemId}?populate=image`);
+        const itemResponse = await fetch(`${API_ENDPOINTS.itemDetail(itemId)}?populate=image`);
         const itemJson = await itemResponse.json();
         setItem(itemJson.data);
       } catch (error) {
@@ -36,7 +36,7 @@ const ItemDetails = () => {
 
     const getItems = async () => {
       try {
-        const itemsResponse = await fetch(`${apiUrl}?populate=image`);
+        const itemsResponse = await fetch(`${API_ENDPOINTS.items}?populate=image`);
         const itemsJson = await itemsResponse.json();
         setItems(itemsJson.data || []);
       } catch (error) {
@@ -48,14 +48,6 @@ const ItemDetails = () => {
     getItem();
     getItems();
   }, [itemId]);
-
-  const getImageUrl = (item) => {
-    if (!item?.attributes?.image?.data?.attributes?.formats?.medium?.url) {
-      return "/default-image.jpg";
-    }
-    const baseUrl = process.env.REACT_APP_UPLOADS_URL || "http://localhost:1337";
-    return `${baseUrl}${item.attributes.image.data.attributes.formats.medium.url}`;
-  };
 
   const renderLink = (item, label) =>
     item && (
