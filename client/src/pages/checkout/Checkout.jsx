@@ -1,19 +1,23 @@
+/* eslint-disable no-useless-escape */
 import { useSelector } from "react-redux";
 import { Box, Button, Stepper, Step, StepLabel } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { Formik } from "formik";
 import { useState } from "react";
 import * as yup from "yup";
-import { shades } from "../../theme";
 import Payment from "./Payment";
 import Shipping from "./Shipping";
 import { loadStripe } from "@stripe/stripe-js";
+import { API_ENDPOINTS } from "../../utils/apiConfig";
 
 const stripePromise = loadStripe(
-  "pk_test_51MxsGAL4xh9QQByFWTF8jjdEOq5nZmiqUGgbnzAmZODD40ar1ZjBp1ROemJkirmiyrbMQVhHGG2paMcNnHlOIBSD00aQTPJ6Cd"
+  process.env.REACT_APP_STRIPE_PUBLIC_KEY || "pk_test_51MxsGAL4xh9QQByFWTF8jjdEOq5nZmiqUGgbnzAmZODD40ar1ZjBp1ROemJkirmiyrbMQVhHGG2paMcNnHlOIBSD00aQTPJ6Cd"
 );
 
 const Checkout = () => {
+  const theme = useTheme();
   const [activeStep, setActiveStep] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
   const cart = useSelector((state) => state.cart.cart);
   const isFirstStep = activeStep === 0;
   const isSecondStep = activeStep === 1;
@@ -29,42 +33,89 @@ const Checkout = () => {
     }
 
     if (isSecondStep) {
-      makePayment(values);
+      await makePayment(values);
     }
 
     actions.setTouched({});
   };
 
   async function makePayment(values) {
-    const stripe = await stripePromise;
-    const requestBody = {
-      userName: [values.firstName, values.lastName].join(" "),
-      email: values.email,
-      products: cart.map(({ id, count }) => ({
-        id,
-        count,
-      })),
-    };
+    if (isProcessing) return;
+    
+    setIsProcessing(true);
+    
+    try {
+      const stripe = await stripePromise;
+      
+      if (!cart || cart.length === 0) {
+        throw new Error('Cart is empty');
+      }
 
-    const response = await fetch("https://sprint9-ecommerce-production.up.railway.app/api/orders", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    });
-    const session = await response.json();
-    await stripe.redirectToCheckout({
-      sessionId: session.id,
-    });
+      const requestBody = {
+        userName: [values.firstName, values.lastName].join(" "),
+        email: values.email,
+        products: cart.map(({ id, count }) => ({
+          id,
+          count,
+        })),
+      };
+
+      const response = await fetch(API_ENDPOINTS.orders, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
+      }
+
+      const session = await response.json();
+      
+      if (!session.id) {
+        throw new Error('No session ID received from server');
+      }
+
+      const { error } = await stripe.redirectToCheckout({
+        sessionId: session.id,
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert(`Error processing payment: ${error.message}`);
+      setActiveStep(activeStep - 1);
+    } finally {
+      setIsProcessing(false);
+    }
   }
 
   return (
-    <Box width="80%" m="100px auto">
-      <Stepper activeStep={activeStep} sx={{ m: "20px 0" }}>
+    <Box
+      width={{ xs: "90%", sm: "85%", md: "80%" }}
+      maxWidth={{ md: 1000, lg: 1000, xl: 1000 }}
+      m={`${theme.spacing(12.5)} auto`}
+    >
+      <Stepper
+        activeStep={activeStep}
+        sx={{
+          m: `${theme.spacing(2.5)} 0`,
+          "& .MuiStepIcon-root": {
+            color: theme.palette.neutral.light,
+            "&.Mui-active": { color: theme.palette.primary.main },
+            "&.Mui-completed": { color: theme.palette.primary.main },
+          },
+        }}
+      >
         <Step>
-          <StepLabel>Billing</StepLabel>
+          <StepLabel sx={{ "& .MuiStepLabel-label": { typography: theme.typography.h4 } }}>Billing</StepLabel>
         </Step>
         <Step>
-          <StepLabel>Payment</StepLabel>
+          <StepLabel sx={{ "& .MuiStepLabel-label": { typography: theme.typography.h4 } }}>Payment</StepLabel>
         </Step>
       </Stepper>
       <Box>
@@ -103,20 +154,23 @@ const Checkout = () => {
                   setFieldValue={setFieldValue}
                 />
               )}
-              <Box display="flex" justifyContent="space-between" gap="50px">
+              <Box display="flex" justifyContent="space-between" gap={theme.spacing(6)}>
                 {!isFirstStep && (
                   <Button
                     fullWidth
                     color="primary"
                     variant="contained"
                     sx={{
-                      backgroundColor: shades.primary[200],
+                      backgroundColor: theme.palette.primary.light,
                       boxShadow: "none",
-                      color: "white",
+                      color: theme.palette.common.white,
                       borderRadius: 0,
-                      padding: "15px 40px",
+                      px: theme.spacing(5),
+                      py: theme.spacing(2),
+                      textTransform: "none",
                     }}
                     onClick={() => setActiveStep(activeStep - 1)}
+                    disabled={isProcessing}
                   >
                     Back
                   </Button>
@@ -127,14 +181,18 @@ const Checkout = () => {
                   color="primary"
                   variant="contained"
                   sx={{
-                    backgroundColor: shades.primary[400],
+                    backgroundColor: theme.palette.primary.main,
                     boxShadow: "none",
-                    color: "white",
+                    color: theme.palette.common.white,
                     borderRadius: 0,
-                    padding: "15px 40px",
+                    px: theme.spacing(5),
+                    py: theme.spacing(2),
+                    textTransform: "none",
+                    "&:hover": { backgroundColor: theme.palette.primary.dark, boxShadow: "none" },
                   }}
+                  disabled={isProcessing || (isSecondStep && cart.length === 0)}
                 >
-                  {!isSecondStep ? "Next" : "Place Order"}
+                  {isProcessing ? "Processing..." : (!isSecondStep ? "Next" : "Place Order")}
                 </Button>
               </Box>
             </form>
@@ -171,54 +229,114 @@ const initialValues = {
   phoneNumber: "",
 };
 
+// Validaciones mejoradas
 const checkoutSchema = [
   yup.object().shape({
     billingAddress: yup.object().shape({
-      firstName: yup.string().required("required"),
-      lastName: yup.string().required("required"),
-      country: yup.string().required("required"),
-      street1: yup.string().required("required"),
-      street2: yup.string(),
-      city: yup.string().required("required"),
-      state: yup.string().required("required"),
-      zipCode: yup.string().required("required"),
+      firstName: yup.string()
+        .required("First name is required")
+        .matches(/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/, "Only letters and accents are allowed")
+        .min(2, "First name must be at least 2 characters")
+        .max(50, "First name too long"),
+      lastName: yup.string()
+        .required("Last name is required")
+        .matches(/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/, "Only letters and accents are allowed")
+        .min(2, "Last name must be at least 2 characters")
+        .max(50, "Last name too long"),
+      country: yup.string()
+        .required("Country is required")
+        .matches(/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s\-]+$/, "Only letters, accents and hyphens are allowed"),
+      street1: yup.string()
+        .required("Street address is required")
+        .min(5, "Address must be at least 5 characters")
+        .max(100, "Address too long"),
+      street2: yup.string()
+        .max(100, "Address too long"),
+      city: yup.string()
+        .required("City is required")
+        .matches(/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s\-]+$/, "Only letters, accents and hyphens are allowed")
+        .min(2, "City must be at least 2 characters")
+        .max(50, "City name too long"),
+      state: yup.string()
+        .required("State is required")
+        .matches(/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s\-]+$/, "Only letters, accents and hyphens are allowed")
+        .min(2, "State must be at least 2 characters")
+        .max(50, "State name too long"),
+      zipCode: yup.string()
+        .required("Zip code is required")
+        .matches(/^[A-Za-z0-9\-\s]+$/, "Only letters, numbers and hyphens are allowed")
+        .min(3, "Zip code must be at least 3 characters")
+        .max(10, "Zip code too long"),
     }),
     shippingAddress: yup.object().shape({
       isSameAddress: yup.boolean(),
       firstName: yup.string().when("isSameAddress", {
         is: false,
-        then: yup.string().required("required"),
+        then: yup.string()
+          .required("First name is required")
+          .matches(/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/, "Only letters and accents are allowed")
+          .min(2, "First name must be at least 2 characters")
+          .max(50, "First name too long"),
       }),
       lastName: yup.string().when("isSameAddress", {
         is: false,
-        then: yup.string().required("required"),
+        then: yup.string()
+          .required("Last name is required")
+          .matches(/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s]+$/, "Only letters and accents are allowed")
+          .min(2, "Last name must be at least 2 characters")
+          .max(50, "Last name too long"),
       }),
       country: yup.string().when("isSameAddress", {
         is: false,
-        then: yup.string().required("required"),
+        then: yup.string()
+          .required("Country is required")
+          .matches(/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s\-]+$/, "Only letters, accents and hyphens are allowed"),
       }),
       street1: yup.string().when("isSameAddress", {
         is: false,
-        then: yup.string().required("required"),
+        then: yup.string()
+          .required("Street address is required")
+          .min(5, "Address must be at least 5 characters")
+          .max(100, "Address too long"),
       }),
-      street2: yup.string(),
+      street2: yup.string()
+        .max(100, "Address too long"),
       city: yup.string().when("isSameAddress", {
         is: false,
-        then: yup.string().required("required"),
+        then: yup.string()
+          .required("City is required")
+          .matches(/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s\-]+$/, "Only letters, accents and hyphens are allowed")
+          .min(2, "City must be at least 2 characters")
+          .max(50, "City name too long"),
       }),
       state: yup.string().when("isSameAddress", {
         is: false,
-        then: yup.string().required("required"),
+        then: yup.string()
+          .required("State is required")
+          .matches(/^[A-Za-zÁáÉéÍíÓóÚúÑñ\s\-]+$/, "Only letters, accents and hyphens are allowed")
+          .min(2, "State must be at least 2 characters")
+          .max(50, "State name too long"),
       }),
       zipCode: yup.string().when("isSameAddress", {
         is: false,
-        then: yup.string().required("required"),
+        then: yup.string()
+          .required("Zip code is required")
+          .matches(/^[A-Za-z0-9\-\s]+$/, "Only letters, numbers and hyphens are allowed")
+          .min(3, "Zip code must be at least 3 characters")
+          .max(10, "Zip code too long"),
       }),
     }),
   }),
   yup.object().shape({
-    email: yup.string().required("required"),
-    phoneNumber: yup.string().required("required"),
+    email: yup.string()
+      .required("Email is required")
+      .email("Invalid email format")
+      .matches(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "Invalid email format"),
+    phoneNumber: yup.string()
+      .required("Phone number is required")
+      .matches(/^[0-9+\-\s()]+$/, "Only numbers, spaces, and + - ( ) are allowed")
+      .min(6, "Phone number must be at least 6 digits")
+      .max(15, "Phone number too long"),
   }),
 ];
 

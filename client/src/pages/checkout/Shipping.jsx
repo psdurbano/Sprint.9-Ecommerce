@@ -1,4 +1,5 @@
 import { Box, Checkbox, FormControlLabel, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import AddressForm from "./AddressForm";
 
 const Shipping = ({
@@ -9,10 +10,11 @@ const Shipping = ({
   handleBlur,
   setFieldValue,
 }) => {
+  const theme = useTheme();
   return (
-    <Box m="30px auto">
+    <Box m={`${theme.spacing(3.75)} auto`}>
       <Box>
-        <Typography sx={{ mb: "15px" }} fontSize="18px">
+        <Typography variant="h3" sx={{ mb: theme.spacing(1.875), color: theme.palette.neutral.dark }}>
           Billing Information
         </Typography>
         <AddressForm
@@ -25,7 +27,7 @@ const Shipping = ({
         />
       </Box>
 
-      <Box mb="20px">
+      <Box mb={theme.spacing(2.5)}>
         <FormControlLabel
           control={
             <Checkbox
@@ -45,7 +47,7 @@ const Shipping = ({
 
       {!values.shippingAddress.isSameAddress && (
         <Box>
-          <Typography sx={{ mb: "15px" }} fontSize="18px">
+          <Typography variant="h3" sx={{ mb: theme.spacing(1.875), color: theme.palette.neutral.dark }}>
             Shipping Information
           </Typography>
           <AddressForm
