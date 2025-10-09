@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { Box } from "@mui/material";
 import Home from "./pages/home/Home";
 import Navbar from "./pages/global/Navbar";
 import Footer from "./pages/global/Footer";
@@ -8,7 +9,7 @@ import CartMenu from "./pages/global/CartMenu";
 import Checkout from "./pages/checkout/Checkout";
 import Confirmation from "./pages/checkout/Confirmation";
 import SignupForm from "./pages/global/SignUpForm";
-import AboutUs from "./pages/info/AboutUs"; // ← AQUÍ
+import AboutUs from "./pages/info/AboutUs";
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -22,18 +23,28 @@ function App() {
   return (
     <div className="app">
       <BrowserRouter>
-        <Navbar />
-        <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/SignUp" element={<SignupForm />} />
-          <Route path="/item/:itemId" element={<ItemDetails />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/checkout/success" element={<Confirmation />} />
-          <Route path="/about-us" element={<AboutUs />} /> {/* ← AQUÍ */}
-        </Routes>
-        <CartMenu />
-        <Footer />
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "100vh",
+          }}
+        >
+          <Navbar />
+          <ScrollToTop />
+          <Box component="main" sx={{ flex: 1 }}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/SignUp" element={<SignupForm />} />
+              <Route path="/item/:itemId" element={<ItemDetails />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/checkout/success" element={<Confirmation />} />
+              <Route path="/about-us" element={<AboutUs />} />
+            </Routes>
+          </Box>
+          <CartMenu />
+          <Footer />
+        </Box>
       </BrowserRouter>
     </div>
   );
