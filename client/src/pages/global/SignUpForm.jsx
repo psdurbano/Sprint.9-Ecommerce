@@ -10,6 +10,7 @@ import {
   AlertTitle,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "@mui/material/styles";
 
 const SignupSchema = Yup.object().shape({
   firstName: Yup.string()
@@ -24,6 +25,7 @@ const SignupSchema = Yup.object().shape({
 });
 
 const SignupForm = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [showAlert, setShowAlert] = useState(false);
 
@@ -42,15 +44,12 @@ const SignupForm = () => {
 
   return (
     <Box
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-      }}
+      width={{ xs: "90%", sm: "85%", md: "80%" }}
+      maxWidth={{ md: 1000, lg: 1000, xl: 1000 }}
+      m={`${theme.spacing(12.5)} auto`}
     >
-      <Box sx={{ width: "80%", maxWidth: "400px" }}>
-        <Typography variant="h4" align="center" gutterBottom>
+      <Box sx={{ width: "100%" }}>
+        <Typography variant="h3" align="center" gutterBottom sx={{ color: theme.palette.neutral.dark }}>
           Sign up
         </Typography>
         <Formik
@@ -60,11 +59,14 @@ const SignupForm = () => {
         >
           {({ errors, touched }) => (
             <Form>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: theme.spacing(1.875) }}>
                 <Field
                   name="firstName"
                   as={TextField}
                   label="Name"
+                  variant="outlined"
+                  size="medium"
+                  fullWidth
                   error={touched.firstName && Boolean(errors.firstName)}
                   helperText={touched.firstName && errors.firstName}
                 />
@@ -72,6 +74,9 @@ const SignupForm = () => {
                   name="lastName"
                   as={TextField}
                   label="Last Name"
+                  variant="outlined"
+                  size="medium"
+                  fullWidth
                   error={touched.lastName && Boolean(errors.lastName)}
                   helperText={touched.lastName && errors.lastName}
                 />
@@ -79,17 +84,34 @@ const SignupForm = () => {
                   name="email"
                   as={TextField}
                   label="Email"
+                  variant="outlined"
+                  size="medium"
+                  fullWidth
                   error={touched.email && Boolean(errors.email)}
                   helperText={touched.email && errors.email}
                 />
-                <Button type="submit" variant="contained" color="primary">
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  sx={{
+                    backgroundColor: theme.palette.primary.main,
+                    boxShadow: "none",
+                    color: theme.palette.common.white,
+                    borderRadius: 0,
+                    px: theme.spacing(5),
+                    py: theme.spacing(2),
+                    textTransform: "none",
+                    "&:hover": { backgroundColor: theme.palette.primary.dark, boxShadow: "none" },
+                  }}
+                >
                   Submit!
                 </Button>
               </Box>
             </Form>
           )}
         </Formik>
-        <Box m="90px auto" width="100%" maxWidth={"400px"}>
+        <Box m={`${theme.spacing(11.25)} auto`} width="100%">
           {showAlert && (
             <Alert severity="success">
               <AlertTitle>Success</AlertTitle>

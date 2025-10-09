@@ -1,19 +1,31 @@
 import React, { useState, useMemo, useCallback } from "react";
-import { Box, IconButton, useMediaQuery, Typography } from "@mui/material";
+import { 
+  Box, 
+  IconButton, 
+  useMediaQuery, 
+  Typography, 
+  useTheme 
+} from "@mui/material";
 import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
-// Constants for better maintainability
+// Importación profesional de imágenes
+import joanJettImage from "../../assets/joan-jett-1.jpg";
+import johnColtraneImage from "../../assets/john-coltrane-1.jpg";
+import michaelJacksonImage from "../../assets/michael-jackson-1.jpg";
+import arethaFranklinImage from "../../assets/aretha-franklin-1.jpg";
+
 const CAROUSEL_CONFIG = {
   autoPlay: true,
-  interval: 5000,
+  interval: 6000,
   transitionTime: 800,
   infiniteLoop: true,
   showThumbs: false,
-  showIndicators: false,
+  showIndicators: false, // Desactivamos indicadores nativos para usar personalizados
   showStatus: false,
+  stopOnHover: true,
 };
 
 const GENRES = [
@@ -39,41 +51,31 @@ const GENRES = [
   },
 ];
 
-const BREAKPOINTS = {
-  mobile: 600,
-  tablet: 900,
-};
-
 const MainCarousel = () => {
-  const isMobile = useMediaQuery(`(max-width:${BREAKPOINTS.mobile}px)`);
-  const isTablet = useMediaQuery(`(max-width:${BREAKPOINTS.tablet}px)`);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.down("md"));
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Image imports
-  const carouselImages = useMemo(() => {
-    const importAll = (r) => r.keys().reduce((acc, item) => {
-      acc[item.replace("./", "")] = r(item);
-      return acc;
-    }, {});
+  // Importación profesional de imágenes con useMemo
+  const carouselImages = useMemo(() => [
+    { image: joanJettImage, genre: GENRES[0] },     // ROCK
+    { image: johnColtraneImage, genre: GENRES[1] }, // JAZZ  
+    { image: michaelJacksonImage, genre: GENRES[2] }, // POP
+    { image: arethaFranklinImage, genre: GENRES[3] }, // SOUL
+  ], []);
 
-    const heroTextureImports = importAll(
-      require.context("../../assets", false, /\.(png|jpe?g|svg)$/)
-    );
-
-    return Object.values(heroTextureImports);
-  }, []);
-
-  // Responsive calculations
+  // Responsive calculations using theme
   const responsiveValues = useMemo(() => ({
-    arrowPosition: isMobile ? "5px" : isTablet ? "15px" : "30px",
-    titleFontSize: isMobile ? "2rem" : isTablet ? "3rem" : "5rem",
-    subtitleFontSize: isMobile ? "0.8rem" : isTablet ? "1rem" : "1.25rem",
-    textMaxWidth: isMobile ? "85%" : isTablet ? "70%" : "500px",
-    textLeftPosition: isMobile ? "8%" : isTablet ? "10%" : "8%",
-    carouselHeight: isMobile ? "400px" : isTablet ? "500px" : "700px",
-    indicatorBottom: isMobile ? "15px" : isTablet ? "25px" : "40px",
-    buttonPadding: isMobile ? "8px 20px" : isTablet ? "10px 24px" : "12px 32px",
-    buttonFontSize: isMobile ? "0.75rem" : isTablet ? "0.85rem" : "0.95rem",
+    arrowPosition: isMobile ? "8px" : "20px",
+    titleFontSize: isMobile ? "2rem" : isTablet ? "3rem" : "4rem",
+    subtitleFontSize: isMobile ? "0.9rem" : "1rem",
+    textMaxWidth: isMobile ? "90%" : "500px",
+    textLeftPosition: isMobile ? "5%" : "12%",
+    carouselHeight: isMobile ? "70vh" : "80vh",
+    indicatorBottom: isMobile ? "20px" : "30px",
+    buttonPadding: isMobile ? "12px 24px" : "14px 32px",
+    buttonFontSize: isMobile ? "0.8rem" : "0.9rem",
   }), [isMobile, isTablet]);
 
   // Event handlers
@@ -87,9 +89,11 @@ const MainCarousel = () => {
         block: 'start'
       });
       
-      window.dispatchEvent(new CustomEvent('categoryChange', { 
-        detail: { category: genreValue } 
-      }));
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('categoryChange', { 
+          detail: { category: genreValue } 
+        }));
+      }, 500);
     }
   }, []);
 
@@ -97,12 +101,11 @@ const MainCarousel = () => {
     setActiveIndex(index);
   }, []);
 
-  // Arrow component to avoid duplication
-  const CarouselArrow = useCallback(({ direction, onClickHandler }) => {
+  // Arrow component
+  const CarouselArrow = useCallback(({ direction, onClickHandler, hasArrow }) => {
+    if (!hasArrow) return null;
+
     const ArrowIcon = direction === 'prev' ? NavigateBeforeIcon : NavigateNextIcon;
-    const positionStyles = direction === 'prev' 
-      ? { left: responsiveValues.arrowPosition }
-      : { right: responsiveValues.arrowPosition };
 
     return (
       <IconButton
@@ -111,28 +114,27 @@ const MainCarousel = () => {
           position: "absolute",
           top: "50%",
           transform: "translateY(-50%)",
-          color: "white",
-          backgroundColor: "rgba(0, 0, 0, 0.3)",
-          backdropFilter: "blur(8px)",
-          padding: isMobile ? "6px" : isTablet ? "8px" : "12px",
+          color: "rgba(255, 255, 255, 0.8)",
+          backgroundColor: "transparent",
+          padding: isMobile ? 1 : 1.5,
           zIndex: 10,
+          borderRadius: 0,
+          border: "none",
           transition: "all 0.3s ease",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
+          left: direction === 'prev' ? responsiveValues.arrowPosition : undefined,
+          right: direction === 'next' ? responsiveValues.arrowPosition : undefined,
           "&:hover": {
-            backgroundColor: "rgba(255, 199, 9, 0.9)",
-            color: "#000",
+            color: theme.palette.secondary.main,
+            backgroundColor: "rgba(255, 255, 255, 0.1)",
             transform: "translateY(-50%) scale(1.1)",
           },
-          ...positionStyles,
         }}
         aria-label={`${direction === 'prev' ? 'Previous' : 'Next'} slide`}
       >
-        <ArrowIcon sx={{ 
-          fontSize: isMobile ? 24 : isTablet ? 28 : 36 
-        }} />
+        <ArrowIcon sx={{ fontSize: isMobile ? 28 : 32 }} />
       </IconButton>
     );
-  }, [responsiveValues.arrowPosition, isMobile, isTablet]);
+  }, [responsiveValues.arrowPosition, isMobile, theme]);
 
   // Carousel slide component
   const CarouselSlide = useCallback(({ image, genre, index }) => (
@@ -153,140 +155,143 @@ const MainCarousel = () => {
             position: "absolute",
             inset: 0,
             background: isMobile 
-              ? "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%)"
-              : "linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%)",
+              ? `linear-gradient(to bottom, rgba(45,44,47,0.7) 0%, rgba(45,44,47,0.4) 50%, rgba(45,44,47,0.2) 100%)`
+              : `linear-gradient(to right, rgba(45,44,47,0.8) 0%, rgba(45,44,47,0.4) 50%, rgba(45,44,47,0.2) 100%)`,
             zIndex: 1,
           },
         }}
       >
         <img
           src={image}
-          alt={`${genre.name} genre showcase`}
+          alt={`${genre?.name || 'Music'} genre showcase`}
           style={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            filter: "brightness(0.85) contrast(1.1)",
+            filter: "brightness(0.9) contrast(1.1)",
           }}
-          loading={index === 0 ? "eager" : "lazy"} // Lazy load non-first images
+          loading={index === 0 ? "eager" : "lazy"}
         />
       </Box>
 
-      {/* Text content */}
+      {/* Text content - POSITIONED TO LEFT */}
       <Box
         sx={{
           position: "absolute",
-          top: isMobile ? "45%" : "50%",
+          top: "50%",
           left: responsiveValues.textLeftPosition,
           transform: "translateY(-50%)",
           zIndex: 2,
           maxWidth: responsiveValues.textMaxWidth,
           opacity: activeIndex === index ? 1 : 0,
-          transition: "all 0.8s ease-out",
-          transitionDelay: activeIndex === index ? "0.2s" : "0s",
+          transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1)",
+          transitionDelay: activeIndex === index ? "0.3s" : "0s",
           textAlign: isMobile ? "center" : "left",
+          width: isMobile ? "90%" : "auto",
         }}
       >
-        {/* Decorative line - Hidden on mobile */}
         {!isMobile && (
           <Box
             sx={{
-              width: activeIndex === index ? (isTablet ? "40px" : "60px") : 0,
-              height: "3px",
-              backgroundColor: "#FFC709",
-              mb: 2,
+              width: activeIndex === index ? "60px" : 0,
+              height: "2px",
+              backgroundColor: theme.palette.secondary.main,
+              mb: 3,
               transition: "width 0.6s ease-out",
-              transitionDelay: activeIndex === index ? "0.3s" : "0s",
+              transitionDelay: activeIndex === index ? "0.5s" : "0s",
+              marginLeft: 0,
+              marginRight: "auto",
             }}
           />
         )}
 
-        {/* Clickable genre title */}
         <Typography
           component="h1"
-          onClick={() => handleGenreClick(genre.value)}
+          onClick={() => genre && handleGenreClick(genre.value)}
           sx={{
-            fontWeight: 800,
+            fontFamily: "'Cinzel', serif",
+            fontWeight: 600,
             textTransform: "uppercase",
             fontSize: responsiveValues.titleFontSize,
-            mb: isMobile ? 1 : 2,
-            color: "white",
-            letterSpacing: "-0.02em",
-            lineHeight: 0.9,
+            mb: 2,
+            color: theme.palette.common.white,
+            letterSpacing: "0.02em",
+            lineHeight: 1.1,
             textShadow: "2px 2px 20px rgba(0,0,0,0.5)",
-            background: "linear-gradient(135deg, #FFC709 0%, #FFE066 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            cursor: "pointer",
+            cursor: genre ? "pointer" : "default",
             transition: "all 0.3s ease",
-            "&:hover": {
-              transform: isMobile ? "none" : "translateY(-2px)",
-              textShadow: "2px 4px 25px rgba(255, 199, 9, 0.5)",
-            },
+            "&:hover": genre ? {
+              transform: "translateY(-2px)",
+              color: theme.palette.secondary.main,
+            } : {},
             wordWrap: "break-word",
             overflowWrap: "break-word",
           }}
-          aria-label={`Explore ${genre.name} albums`}
+          aria-label={genre ? `Explore ${genre.name} albums` : undefined}
         >
-          {genre.name}
+          {genre?.name || "Discover Music"}
         </Typography>
 
-        {/* Subtitle */}
         <Typography
           variant="subtitle1"
           component="p"
           sx={{
-            color: "rgba(255, 255, 255, 0.9)",
+            color: theme.palette.common.white,
             fontSize: responsiveValues.subtitleFontSize,
             fontWeight: 300,
-            letterSpacing: "0.05em",
-            lineHeight: 1.5,
+            letterSpacing: "0.03em",
+            lineHeight: 1.6,
             maxWidth: isMobile ? "100%" : "400px",
             textShadow: "1px 1px 10px rgba(0,0,0,0.7)",
-            mb: isMobile ? 2 : 0,
-            padding: isMobile ? "0 10px" : "0",
+            mb: 4,
+            opacity: 0.9,
+            fontFamily: "'Fauna One', serif",
+            marginLeft: isMobile ? "auto" : 0,
+            marginRight: isMobile ? "auto" : "auto",
           }}
         >
-          {genre.subtitle}
+          {genre?.subtitle || "Explore our curated collection of vinyl records"}
         </Typography>
 
-        {/* CTA Button */}
-        <Box
-          component="button"
-          onClick={() => handleGenreClick(genre.value)}
-          sx={{
-            mt: isMobile ? 2 : 4,
-            display: "inline-block",
-            padding: responsiveValues.buttonPadding,
-            backgroundColor: "transparent",
-            border: "2px solid #FFC709",
-            color: "#FFC709",
-            fontWeight: 600,
-            fontSize: responsiveValues.buttonFontSize,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            cursor: "pointer",
-            transition: "all 0.3s ease",
-            borderRadius: "2px",
-            "&:hover": {
-              backgroundColor: "#FFC709",
-              color: "#000",
-              transform: isMobile ? "none" : "translateY(-2px)",
-              boxShadow: "0 8px 20px rgba(255, 199, 9, 0.3)",
-            },
-            "&:focus": {
-              outline: "2px solid #FFC709",
-              outlineOffset: "2px",
-            },
-          }}
-          aria-label={`Find ${genre.name} albums`}
-        >
-          Find Albums
-        </Box>
+        {genre && (
+          <Box
+            component="button"
+            onClick={() => handleGenreClick(genre.value)}
+            sx={{
+              padding: responsiveValues.buttonPadding,
+              backgroundColor: "transparent",
+              border: `1px solid ${theme.palette.secondary.main}`,
+              color: theme.palette.secondary.main,
+              fontWeight: 500,
+              fontSize: responsiveValues.buttonFontSize,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+              borderRadius: 0,
+              fontFamily: "'Fauna One', serif",
+              "&:hover": {
+                backgroundColor: theme.palette.secondary.main,
+                color: theme.palette.primary.main,
+                transform: "translateY(-2px)",
+                boxShadow: `0 8px 20px ${theme.palette.secondary.main}40`,
+              },
+              "&:focus-visible": {
+                outline: `2px solid ${theme.palette.secondary.main}`,
+                outlineOffset: "2px",
+              },
+              display: isMobile ? "block" : "inline-block",
+              marginLeft: isMobile ? "auto" : 0,
+              marginRight: isMobile ? "auto" : "auto",
+            }}
+            aria-label={`Find ${genre.name} albums`}
+          >
+            Explore {genre.name}
+          </Box>
+        )}
       </Box>
     </Box>
-  ), [responsiveValues, isMobile, isTablet, activeIndex, handleGenreClick]);
+  ), [responsiveValues, isMobile, theme, activeIndex, handleGenreClick]);
 
   // Custom indicators component
   const CustomIndicators = useCallback(() => (
@@ -330,32 +335,43 @@ const MainCarousel = () => {
   ), [carouselImages, activeIndex, responsiveValues.indicatorBottom, isMobile]);
 
   return (
-    <Box 
-      component="section" 
+    <Box
+      component="section"
       aria-label="Music genres carousel"
-      sx={{ position: "relative", overflow: "hidden" }}
+      sx={{
+        position: "relative",
+        overflow: "hidden",
+        backgroundColor: theme.palette.primary.main,
+      }}
     >
       <Carousel
         {...CAROUSEL_CONFIG}
         selectedItem={activeIndex}
         onChange={handleIndexChange}
         renderArrowPrev={(onClickHandler, hasPrev) => (
-          <CarouselArrow direction="prev" onClickHandler={onClickHandler} />
+          <CarouselArrow
+            direction="prev"
+            onClickHandler={onClickHandler}
+            hasArrow={hasPrev}
+          />
         )}
         renderArrowNext={(onClickHandler, hasNext) => (
-          <CarouselArrow direction="next" onClickHandler={onClickHandler} />
+          <CarouselArrow
+            direction="next"
+            onClickHandler={onClickHandler}
+            hasArrow={hasNext}
+          />
         )}
       >
-        {carouselImages.map((image, index) => (
+        {carouselImages.map((item, index) => (
           <CarouselSlide
             key={`carousel-slide-${index}`}
-            image={image}
-            genre={GENRES[index]}
+            image={item.image}
+            genre={item.genre}
             index={index}
           />
         ))}
       </Carousel>
-
       <CustomIndicators />
     </Box>
   );

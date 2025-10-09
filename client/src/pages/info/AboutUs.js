@@ -1,9 +1,16 @@
 import React from "react";
 import { Box, Typography, Grid } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
 const AboutUs = () => {
+  const theme = useTheme();
+  
   return (
-    <Box width="80%" m="80px auto">
+    <Box
+      width={{ xs: "90%", sm: "85%", md: "80%" }}
+      maxWidth={{ md: 1200, lg: 1200, xl: 1200 }}
+      m={`${theme.spacing(12.5)} auto`}
+    >
       <Grid container spacing={6} alignItems="center">
         {/* Foto personal */}
         <Grid item xs={12} md={5} lg={6}>
@@ -29,7 +36,7 @@ const AboutUs = () => {
             About Us
           </Typography>
           <Typography variant="body1" sx={{ mt: 2, lineHeight: 1.6 }}>
-            Hi, I’m Pablo, the founder and driving force behind this record store project. Music has always been at the core of my life — from years as a DJ and collector, to building a community through the Allmyrecords blog & Discogs. While Allmyrecords started as my personal passion project, over time it has blossomed thanks to a talented group of collaborators who have contributed at different stages. Together, we’ve created a place where the love for music and the spirit of vinyl collecting come together.
+            Hi, I'm Pablo, the founder and driving force behind this record store project. Music has always been at the core of my life — from years as a DJ and collector, to building a community through the Allmyrecords blog & Discogs. While Allmyrecords started as my personal passion project, over time it has blossomed thanks to a talented group of collaborators who have contributed at different stages. Together, we've created a place where the love for music and the spirit of vinyl collecting come together.
           </Typography>
           <Typography variant="body1" sx={{ mt: 2, lineHeight: 1.6 }}>
             My journey began in Argentina, producing local events and diving deep into crate digging — spending countless hours in record shops chasing hidden gems. This passion led me to collaborate with musicians, producers, and labels, curating collections and designing sound experiences that connected audiences locally and globally. Throughout, I learned that music thrives in community — each conversation and shared discovery bridges people and sound.
