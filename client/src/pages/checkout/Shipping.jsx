@@ -1,6 +1,7 @@
 import { Box, Checkbox, FormControlLabel, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import AddressForm from "./AddressForm";
+import { shades } from "../../theme";
 
 const Shipping = ({
   values,
@@ -11,10 +12,19 @@ const Shipping = ({
   setFieldValue,
 }) => {
   const theme = useTheme();
+
   return (
-    <Box m={`${theme.spacing(3.75)} auto`}>
-      <Box>
-        <Typography variant="h3" sx={{ mb: theme.spacing(1.875), color: theme.palette.neutral.dark }}>
+    <Box my={theme.spacing(6)}>
+      <Box mb={theme.spacing(4)}>
+        <Typography
+          variant="h3"
+          sx={{
+            mb: theme.spacing(3),
+            color: shades.primary[500],
+            fontFamily: theme.typography.h3.fontFamily,
+            fontWeight: 600,
+          }}
+        >
           Billing Information
         </Typography>
         <AddressForm
@@ -27,27 +37,41 @@ const Shipping = ({
         />
       </Box>
 
-      <Box mb={theme.spacing(2.5)}>
+      <Box mb={theme.spacing(4)}>
         <FormControlLabel
+          label={
+            <Typography sx={{ fontFamily: theme.typography.fontFamily }}>
+              Use same address for shipping
+            </Typography>
+          }
           control={
             <Checkbox
-              defaultChecked
-              value={values.shippingAddress.isSameAddress}
-              onChange={() =>
-                setFieldValue(
-                  "shippingAddress.isSameAddress",
-                  !values.shippingAddress.isSameAddress
-                )
+              checked={values.shippingAddress.isSameAddress}
+              onChange={(e) =>
+                setFieldValue("shippingAddress.isSameAddress", e.target.checked)
               }
+              sx={{
+                color: shades.primary[500],
+                "&.Mui-checked": {
+                  color: shades.primary[500],
+                },
+              }}
             />
           }
-          label="Same for Shipping Address"
         />
       </Box>
 
       {!values.shippingAddress.isSameAddress && (
         <Box>
-          <Typography variant="h3" sx={{ mb: theme.spacing(1.875), color: theme.palette.neutral.dark }}>
+          <Typography
+            variant="h3"
+            sx={{
+              mb: theme.spacing(3),
+              color: shades.primary[500],
+              fontFamily: theme.typography.h3.fontFamily,
+              fontWeight: 600,
+            }}
+          >
             Shipping Information
           </Typography>
           <AddressForm

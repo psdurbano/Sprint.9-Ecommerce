@@ -1,8 +1,6 @@
-/* eslint-disable no-useless-escape */
 import { getIn } from "formik";
-import { Box } from "@mui/material";
+import { Box, TextField } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import TextField from "@mui/material/TextField";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
 const AddressForm = ({
@@ -17,60 +15,39 @@ const AddressForm = ({
   const isNonMobile = useMediaQuery("(min-width:600px)");
 
   const formattedName = (field) => `${type}.${field}`;
-
   const formattedError = (field) =>
-    Boolean(
-      getIn(touched, formattedName(field)) &&
-        getIn(errors, formattedName(field))
-    );
-
+    Boolean(getIn(touched, formattedName(field)) && getIn(errors, formattedName(field)));
   const formattedHelper = (field) =>
     getIn(touched, formattedName(field)) && getIn(errors, formattedName(field));
 
-  // Función para prevenir caracteres no deseados en nombres
   const handleNameChange = (e) => {
     const { name, value } = e.target;
-    // Solo permite letras, espacios y caracteres acentuados
     const filteredValue = value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s]/g, '');
-    handleChange({
-      target: {
-        name,
-        value: filteredValue
-      }
-    });
+    handleChange({ target: { name, value: filteredValue } });
   };
 
-  // Función para código postal (letras, números, guiones)
   const handleZipCodeChange = (e) => {
     const { name, value } = e.target;
     const filteredValue = value.replace(/[^A-Za-z0-9\-\s]/g, '');
-    handleChange({
-      target: {
-        name,
-        value: filteredValue
-      }
-    });
+    handleChange({ target: { name, value: filteredValue } });
   };
 
-  // Función para ciudad/estado/país (letras, guiones, espacios)
   const handleLocationChange = (e) => {
     const { name, value } = e.target;
+    // eslint-disable-next-line no-useless-escape
     const filteredValue = value.replace(/[^A-Za-zÁáÉéÍíÓóÚúÑñ\s\-]/g, '');
-    handleChange({
-      target: {
-        name,
-        value: filteredValue
-      }
-    });
+    handleChange({ target: { name, value: filteredValue } });
   };
 
   return (
     <Box
       display="grid"
-      gap={theme.spacing(1.875)}
+      gap={theme.spacing(2)}
       gridTemplateColumns="repeat(4, minmax(0, 1fr))"
       sx={{
-        "& > div": { gridColumn: isNonMobile ? undefined : "span 4" },
+        "& > div": { 
+          gridColumn: isNonMobile ? undefined : "span 4",
+        },
       }}
     >
       <TextField
@@ -85,11 +62,18 @@ const AddressForm = ({
         name={formattedName("firstName")}
         error={formattedError("firstName")}
         helperText={formattedHelper("firstName")}
-        sx={{ gridColumn: "span 2" }}
-        inputProps={{
-          maxLength: 50
+        sx={{ 
+          gridColumn: "span 2",
+          '& .MuiInputLabel-root': {
+            fontFamily: theme.typography.fontFamily,
+          },
+          '& .MuiInputBase-input': {
+            fontFamily: theme.typography.fontFamily,
+          }
         }}
+        inputProps={{ maxLength: 50 }}
       />
+      
       <TextField
         fullWidth
         variant="outlined"
@@ -102,11 +86,18 @@ const AddressForm = ({
         name={formattedName("lastName")}
         error={formattedError("lastName")}
         helperText={formattedHelper("lastName")}
-        sx={{ gridColumn: "span 2" }}
-        inputProps={{
-          maxLength: 50
+        sx={{ 
+          gridColumn: "span 2",
+          '& .MuiInputLabel-root': {
+            fontFamily: theme.typography.fontFamily,
+          },
+          '& .MuiInputBase-input': {
+            fontFamily: theme.typography.fontFamily,
+          }
         }}
+        inputProps={{ maxLength: 50 }}
       />
+
       <TextField
         fullWidth
         variant="outlined"
@@ -119,11 +110,18 @@ const AddressForm = ({
         name={formattedName("country")}
         error={formattedError("country")}
         helperText={formattedHelper("country")}
-        sx={{ gridColumn: "span 4" }}
-        inputProps={{
-          maxLength: 50
+        sx={{ 
+          gridColumn: "span 4",
+          '& .MuiInputLabel-root': {
+            fontFamily: theme.typography.fontFamily,
+          },
+          '& .MuiInputBase-input': {
+            fontFamily: theme.typography.fontFamily,
+          }
         }}
+        inputProps={{ maxLength: 50 }}
       />
+
       <TextField
         fullWidth
         variant="outlined"
@@ -136,11 +134,18 @@ const AddressForm = ({
         name={formattedName("street1")}
         error={formattedError("street1")}
         helperText={formattedHelper("street1")}
-        sx={{ gridColumn: "span 2" }}
-        inputProps={{
-          maxLength: 100
+        sx={{ 
+          gridColumn: "span 2",
+          '& .MuiInputLabel-root': {
+            fontFamily: theme.typography.fontFamily,
+          },
+          '& .MuiInputBase-input': {
+            fontFamily: theme.typography.fontFamily,
+          }
         }}
+        inputProps={{ maxLength: 100 }}
       />
+
       <TextField
         fullWidth
         variant="outlined"
@@ -153,11 +158,18 @@ const AddressForm = ({
         name={formattedName("street2")}
         error={formattedError("street2")}
         helperText={formattedHelper("street2")}
-        sx={{ gridColumn: "span 2" }}
-        inputProps={{
-          maxLength: 100
+        sx={{ 
+          gridColumn: "span 2",
+          '& .MuiInputLabel-root': {
+            fontFamily: theme.typography.fontFamily,
+          },
+          '& .MuiInputBase-input': {
+            fontFamily: theme.typography.fontFamily,
+          }
         }}
+        inputProps={{ maxLength: 100 }}
       />
+
       <TextField
         fullWidth
         variant="outlined"
@@ -170,11 +182,18 @@ const AddressForm = ({
         name={formattedName("city")}
         error={formattedError("city")}
         helperText={formattedHelper("city")}
-        sx={{ gridColumn: "span 2" }}
-        inputProps={{
-          maxLength: 50
+        sx={{ 
+          gridColumn: "span 2",
+          '& .MuiInputLabel-root': {
+            fontFamily: theme.typography.fontFamily,
+          },
+          '& .MuiInputBase-input': {
+            fontFamily: theme.typography.fontFamily,
+          }
         }}
+        inputProps={{ maxLength: 50 }}
       />
+
       <TextField
         fullWidth
         variant="outlined"
@@ -188,10 +207,9 @@ const AddressForm = ({
         error={formattedError("state")}
         helperText={formattedHelper("state")}
         sx={{ gridColumn: "1fr" }}
-        inputProps={{
-          maxLength: 50
-        }}
+        inputProps={{ maxLength: 50 }}
       />
+
       <TextField
         fullWidth
         variant="outlined"
@@ -205,9 +223,7 @@ const AddressForm = ({
         error={formattedError("zipCode")}
         helperText={formattedHelper("zipCode")}
         sx={{ gridColumn: "1fr" }}
-        inputProps={{
-          maxLength: 10
-        }}
+        inputProps={{ maxLength: 10 }}
       />
     </Box>
   );

@@ -1,3 +1,4 @@
+import React, { useMemo, useCallback, useEffect, useRef } from "react";
 import {
   Box,
   Button,
@@ -13,7 +14,6 @@ import { shades } from "../../theme";
 import { removeFromCart, setIsCartOpen } from "../../state";
 import { useNavigate } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageHelper";
-import { useMemo, useCallback, useEffect, useRef } from "react";
 
 const FlexBox = styled(Box)`
   display: flex;
@@ -202,7 +202,15 @@ const CartMenu = () => {
           }}
         >
           <FlexBox mb="15px">
-            <Typography variant="h3" component="h2">
+            <Typography
+              variant="h3"
+              component="h2"
+              sx={{
+                fontFamily: theme.typography.fontFamily,
+                fontWeight: 600,
+                fontSize: { xs: "1.5rem", sm: "1.75rem" },
+              }}
+            >
               SHOPPING BAG ({cartItemCount})
             </Typography>
             <IconButton
@@ -269,6 +277,7 @@ const CartMenu = () => {
                           sx={{
                             fontSize: "0.9rem",
                             lineHeight: 1.3,
+                            fontFamily: theme.typography.fontFamily,
                           }}
                         >
                           {item?.attributes?.name || "Unnamed Item"}
@@ -293,12 +302,22 @@ const CartMenu = () => {
                       </FlexBox>
 
                       <FlexBox alignItems="center">
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
+                            fontFamily: theme.typography.fontFamily,
+                          }}
+                        >
                           Qty: {item?.count || 1}
                         </Typography>
                         <Typography
                           fontWeight="bold"
-                          sx={{ ml: 2, fontSize: "0.9rem" }}
+                          sx={{
+                            ml: 2,
+                            fontSize: "0.9rem",
+                            fontFamily: theme.typography.fontFamily,
+                          }}
                         >
                           €
                           {(
@@ -312,25 +331,39 @@ const CartMenu = () => {
               ))
             ) : (
               <Box textAlign="center" m="40px 0">
-                <Typography variant="h6" color="text.secondary" gutterBottom>
+                <Typography
+                  variant="h6"
+                  color="text.secondary"
+                  gutterBottom
+                  sx={{
+                    fontFamily: theme.typography.fontFamily,
+                  }}
+                >
                   Your cart is empty
                 </Typography>
                 <Typography
                   variant="body2"
                   color="text.secondary"
-                  sx={{ mb: 3 }}
+                  sx={{
+                    mb: 3,
+                    fontFamily: theme.typography.fontFamily,
+                  }}
                 >
                   Add some items to get started
                 </Typography>
                 <Button
                   variant="outlined"
-                  onClick={handleCloseCart}
+                  onClick={() => {
+                    handleCloseCart();
+                    navigate("/");
+                  }}
                   sx={{
-                    borderColor: shades.primary[400],
-                    color: shades.primary[400],
+                    borderColor: theme.palette.primary.main,
+                    color: theme.palette.primary.main,
+                    fontFamily: theme.typography.fontFamily,
                     "&:hover": {
-                      backgroundColor: shades.primary[50],
-                      borderColor: shades.primary[500],
+                      backgroundColor: theme.palette.primary.light,
+                      borderColor: theme.palette.primary.dark,
                     },
                   }}
                 >
@@ -340,27 +373,51 @@ const CartMenu = () => {
             )}
           </Box>
 
-          {/* FOOTER */}
           {cart.length > 0 && (
             <Box m="20px 0" sx={{ mt: "auto" }}>
               <FlexBox m="20px 0">
-                <Typography variant="h6" fontWeight="bold">
+                <Typography
+                  variant="h6"
+                  fontWeight="bold"
+                  sx={{
+                    fontFamily: theme.typography.fontFamily,
+                  }}
+                >
                   SUBTOTAL
                 </Typography>
-                <Typography variant="h6" fontWeight="bold">
+                <Typography
+                  variant="h6"
+                  fontWeight="bold"
+                  sx={{
+                    fontFamily: theme.typography.fontFamily,
+                  }}
+                >
                   €{totalPrice.toFixed(2)}
                 </Typography>
               </FlexBox>
 
-              {/* BOTÓN CHECKOUT ORIGINAL */}
               <Button
                 sx={{
-                  backgroundColor: shades.primary[400],
+                  backgroundColor: theme.palette.primary.main,
                   color: "white",
                   borderRadius: 0,
                   minWidth: "100%",
                   padding: "15px 30px",
                   m: "20px 0",
+                  fontFamily: theme.typography.fontFamily,
+                  fontSize: "1rem",
+                  letterSpacing: "0.5px",
+                  textTransform: "uppercase",
+                  "&:hover": {
+                    backgroundColor: theme.palette.primary.dark,
+                    transform: "translateY(-1px)",
+                    boxShadow: `0 4px 12px ${theme.palette.primary.main}40`,
+                  },
+                  "&:disabled": {
+                    backgroundColor: shades.neutral[400],
+                    color: shades.neutral[100],
+                  },
+                  transition: "all 0.3s ease",
                 }}
                 onClick={handleCheckout}
                 disabled={!cart?.length}

@@ -1,34 +1,52 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, TextField } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import TextField from "@mui/material/TextField";
+import { shades } from "../../theme";
 
 const Payment = ({ values, touched, errors, handleBlur, handleChange }) => {
   const theme = useTheme();
+  
   return (
-    <Box m={`${theme.spacing(3.75)} 0`}>
-      <Box>
-        <Typography variant="h3" sx={{ mb: theme.spacing(1.875), color: theme.palette.neutral.dark }}>
-          Contact Info
-        </Typography>
+    <Box mt={theme.spacing(6)} mb={theme.spacing(4)}>
+      <Typography 
+        variant="h3" 
+        sx={{ 
+          mb: theme.spacing(3), 
+          color: shades.primary[500],
+          fontFamily: theme.typography.h3.fontFamily,
+          fontWeight: 600,
+        }}
+      >
+        Contact Information
+      </Typography>
+      
+      <Box display="grid" gap={theme.spacing(3)}>
         <TextField
           fullWidth
           variant="outlined"
           size="medium"
-          type="text"
-          label="Email"
+          type="email"
+          label="Email Address"
           onBlur={handleBlur}
           onChange={handleChange}
           value={values.email}
           name="email"
           error={!!touched.email && !!errors.email}
           helperText={touched.email && errors.email}
-          sx={{ gridColumn: "span 4", mb: theme.spacing(1.875) }}
+          sx={{
+            '& .MuiInputLabel-root': {
+              fontFamily: theme.typography.fontFamily,
+            },
+            '& .MuiInputBase-input': {
+              fontFamily: theme.typography.fontFamily,
+            }
+          }}
         />
+        
         <TextField
           fullWidth
           variant="outlined"
           size="medium"
-          type="text"
+          type="tel"
           label="Phone Number"
           onBlur={handleBlur}
           onChange={handleChange}
@@ -36,7 +54,14 @@ const Payment = ({ values, touched, errors, handleBlur, handleChange }) => {
           name="phoneNumber"
           error={!!touched.phoneNumber && !!errors.phoneNumber}
           helperText={touched.phoneNumber && errors.phoneNumber}
-          sx={{ gridColumn: "span 4" }}
+          sx={{
+            '& .MuiInputLabel-root': {
+              fontFamily: theme.typography.fontFamily,
+            },
+            '& .MuiInputBase-input': {
+              fontFamily: theme.typography.fontFamily,
+            }
+          }}
         />
       </Box>
     </Box>
