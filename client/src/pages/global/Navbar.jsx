@@ -14,8 +14,9 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { setIsCartOpen } from "../../state";
-import logo from "../../assets/logo/logo.png";
 import { useState } from "react";
+
+import { shades } from "../../theme";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -26,39 +27,40 @@ const Navbar = () => {
   const cart = useSelector((state) => state.cart.cart);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Constants to avoid magic numbers
   const NAVBAR_HEIGHT = 60;
   const CONTAINER_WIDTH = "80%";
 
-  // Reusable handlers
   const handleLogoClick = () => navigate("/");
   const handleSignUpClick = () => {
     navigate("/signup");
-    setIsMenuOpen(false); // Close menu after navigation
+    setIsMenuOpen(false);
   };
   const handleCartClick = () => {
     dispatch(setIsCartOpen({}));
-    setIsMenuOpen(false); // Close menu after opening cart
+    setIsMenuOpen(false);
   };
   const handleMenuToggle = (event) => {
-    event.stopPropagation(); // Prevent event bubbling
+    event.stopPropagation();
     setIsMenuOpen(!isMenuOpen);
   };
+  const handleClickOutside = () => {
+    setIsMenuOpen(false);
+  };
 
-  // Calculate cart items
   const cartItemsCount = cart.reduce((total, item) => total + item.count, 0);
 
-  // Reusable styles
   const styles = {
     navbar: {
       display: "flex",
       alignItems: "center",
       width: "100%",
       height: `${NAVBAR_HEIGHT}px`,
-      backgroundColor: "#2D2C2F",
-      color: "black",
+      backgroundColor: shades.primary[500],
+      color: "white",
       zIndex: 1300,
       boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+      position: "sticky",
+      top: 0,
     },
     container: {
       width: CONTAINER_WIDTH,
@@ -85,7 +87,7 @@ const Navbar = () => {
       gap: "20px",
     },
     iconButton: {
-      color: "#FFC709",
+      color: shades.secondary[500],
       transition: "all 0.2s ease",
       "&:hover": {
         backgroundColor: "rgba(255, 199, 9, 0.1)",
@@ -101,22 +103,24 @@ const Navbar = () => {
         minWidth: "16px",
         fontSize: "0.75rem",
         fontWeight: "bold",
-        backgroundColor: "#FFC709",
+        backgroundColor: shades.secondary[500],
+        color: shades.primary[500],
       },
     },
     mobileMenu: {
       position: "absolute",
       top: "100%",
       right: 0,
-      backgroundColor: "#2D2C2F",
+      backgroundColor: shades.primary[500],
       padding: "16px",
       borderRadius: "0 0 8px 8px",
       boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
       display: "flex",
       flexDirection: "column",
-      gap: "16px",
-      minWidth: "150px",
+      gap: "12px",
+      minWidth: "160px",
       zIndex: 1400,
+      border: `1px solid ${shades.primary[600]}`,
     },
     mobileMenuItem: {
       display: "flex",
@@ -124,16 +128,17 @@ const Navbar = () => {
       padding: "8px 12px",
       borderRadius: "4px",
       cursor: "pointer",
-      transition: "background-color 0.2s ease",
+      transition: "all 0.2s ease",
       "&:hover": {
         backgroundColor: "rgba(255, 255, 255, 0.1)",
       },
     },
-  };
-
-  // Close menu when clicking outside
-  const handleClickOutside = () => {
-    setIsMenuOpen(false);
+    mobileMenuText: {
+      color: shades.secondary[500],
+      fontFamily: theme.typography.fontFamily,
+      fontWeight: 500,
+      fontSize: "0.9rem",
+    },
   };
 
   return (
@@ -142,8 +147,8 @@ const Navbar = () => {
         {/* Logo */}
         <Box sx={styles.logo} onClick={handleLogoClick}>
           <img
-            src={logo}
-            alt="Store logo"
+            src="/images/logo/logo.webp"
+            alt="ALLMYRECORDS logo"
             style={styles.logoImage}
           />
         </Box>
@@ -192,8 +197,8 @@ const Navbar = () => {
                   sx={styles.mobileMenuItem}
                   onClick={handleSignUpClick}
                 >
-                  <PersonOutline sx={{ color: "#FFC709", mr: 1 }} />
-                  <Typography variant="body2" sx={{ color: "#FFC709" }}>
+                  <PersonOutline sx={{ color: shades.secondary[500], mr: 1 }} />
+                  <Typography sx={styles.mobileMenuText}>
                     My Account
                   </Typography>
                 </Box>
@@ -209,9 +214,9 @@ const Navbar = () => {
                     invisible={cartItemsCount === 0}
                     sx={{ ...styles.badge, mr: 1 }}
                   >
-                    <ShoppingBagOutlined sx={{ color: "#FFC709" }} />
+                    <ShoppingBagOutlined sx={{ color: shades.secondary[500] }} />
                   </Badge>
-                  <Typography variant="body2" sx={{ color: "#FFC709", ml: 1 }}>
+                  <Typography sx={{ ...styles.mobileMenuText, ml: 1 }}>
                     Cart
                   </Typography>
                 </Box>

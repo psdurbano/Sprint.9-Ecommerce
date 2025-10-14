@@ -1,116 +1,140 @@
 import React from "react";
 import { Box, Typography, IconButton } from "@mui/material";
 import { Twitter, Instagram } from "@mui/icons-material";
-import { useTheme } from "@emotion/react";
-import logo from "../../assets/logo/logo-imagen.png";
+import { useTheme } from "@mui/material/styles";
 import { Link } from "react-router-dom";
+
+import { shades } from "../../theme";
 
 function Footer() {
   const theme = useTheme();
-  const linkColor = "#FFC709";
+  const currentYear = new Date().getFullYear();
 
   return (
     <Box
-      height="200px"
-      backgroundColor="#2D2C2F"
-      color={theme.palette.primary.main}
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
+      component="footer"
+      sx={{
+        backgroundColor: shades.primary[500],
+        color: theme.palette.common.white,
+        py: 4,
+        borderTop: `1px solid ${shades.primary[600]}`,
+      }}
     >
       <Box
-        width="80%"
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
+        sx={{
+          width: { xs: "90%", sm: "80%" },
+          maxWidth: 1200,
+          mx: "auto",
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 3,
+        }}
       >
-        {/* Logo */}
-        <Box display="flex" alignItems="center">
-          <img
-            src={logo}
-            alt="Logo"
-            style={{ height: "150px", width: "auto" }}
-          />
-        </Box>
-
-        {/* Links */}
-        <Box
-          display="flex"
-          flexDirection="column"
-          alignItems="flex-end"
-          justifyContent="center"
-          rowGap="10px"
+        {/* Copyright simple y sobrio */}
+        <Typography 
+          variant="body2" 
+          sx={{ 
+            color: shades.neutral[300],
+            fontFamily: theme.typography.fontFamily,
+            fontWeight: 400,
+            order: { xs: 3, md: 1 }
+          }}
         >
-          {["About Us", "Contact Us", "Grading", "Shipping Terms"].map(
-            (item, index) => {
-              const isLink = item === "About Us";
-              const content = (
-                <Typography
-                  variant="h4"
-                  fontWeight="bold"
-                  fontSize="1.2em"
-                  sx={{
-                    color: linkColor,
-                    borderRadius: "8px",
-                    px: 2,
-                    py: 0.5,
-                    cursor: isLink ? "pointer" : "default",
-                    textDecoration: "none",
-                    transition: "background-color 0.2s ease, transform 0.2s ease",
-                    "&:hover": {
-                      backgroundColor: "rgba(255, 199, 9, 0.1)",
-                      transform: "scale(1.1)",
-                    },
-                  }}
-                >
-                  {item}
-                </Typography>
-              );
-              if (isLink) {
-                return (
-                  <Link
-                    key={index}
-                    to="/about-us"
-                    style={{ textDecoration: "none" }}
-                  >
-                    {content}
-                  </Link>
-                );
-              }
-              return <Box key={index}>{content}</Box>;
-            }
-          )}
+          © {currentYear} ALLMYRECORDS
+        </Typography>
 
-          {/* Socials */}
-          <Box display="flex" columnGap="10px">
-            {[
-              {
-                icon: <Twitter />,
-                link: "https://twitter.com/allmyrecords",
-              },
-              {
-                icon: <Instagram />,
-                link: "https://www.instagram.com/allmyrecords/",
-              },
-            ].map((item, index) => (
-              <IconButton
+        {/* Navigation Links */}
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            gap: { xs: 2, md: 3 },
+            order: { xs: 1, md: 2 }
+          }}
+        >
+          {[
+            { label: "About Us", path: "/about-us", isLink: true },
+            { label: "Contact Us", path: "/contact-us", isLink: true },
+            { label: "Grading", path: "/grading", isLink: true },
+            { label: "Shipping Terms", path: "/shipping", isLink: true }
+          ].map((item, index) => {
+            const content = (
+              <Typography
                 key={index}
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
+                variant="body2"
                 sx={{
-                  color: linkColor,
-                  transition: "background-color 0.2s ease, transform 0.2s ease",
-                  "&:hover": {
-                    backgroundColor: "rgba(255, 199, 9, 0.1)",
-                    transform: "scale(1.1)",
-                  },
+                  color: shades.neutral[300],
+                  fontWeight: 400,
+                  cursor: item.isLink ? "pointer" : "default",
+                  textDecoration: "none",
+                  transition: "all 0.2s ease",
+                  "&:hover": item.isLink ? {
+                    color: shades.secondary[500],
+                  } : {},
+                  fontFamily: theme.typography.fontFamily,
                 }}
               >
-                {item.icon}
-              </IconButton>
-            ))}
-          </Box>
+                {item.label}
+              </Typography>
+            );
+
+            if (item.isLink) {
+              return (
+                <Link
+                  key={index}
+                  to={item.path}
+                  style={{ textDecoration: "none" }}
+                >
+                  {content}
+                </Link>
+              );
+            }
+            return <Box key={index}>{content}</Box>;
+          })}
+        </Box>
+
+        {/* Social Media */}
+        <Box 
+          display="flex" 
+          gap={1}
+          sx={{
+            order: { xs: 2, md: 3 }
+          }}
+        >
+          {[
+            {
+              icon: <Twitter sx={{ fontSize: 20 }} />,
+              link: "https://twitter.com/allmyrecords",
+              label: "Twitter"
+            },
+            {
+              icon: <Instagram sx={{ fontSize: 20 }} />,
+              link: "https://www.instagram.com/allmyrecords/",
+              label: "Instagram"
+            },
+          ].map((item, index) => (
+            <IconButton
+              key={index}
+              href={item.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Visit our ${item.label}`}
+              size="small"
+              sx={{
+                color: shades.neutral[300],
+                transition: "all 0.2s ease",
+                "&:hover": {
+                  color: shades.secondary[500],
+                  backgroundColor: "rgba(255, 199, 9, 0.1)",
+                },
+              }}
+            >
+              {item.icon}
+            </IconButton>
+          ))}
         </Box>
       </Box>
     </Box>
