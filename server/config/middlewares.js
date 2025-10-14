@@ -1,64 +1,55 @@
 module.exports = [
-  'strapi::errors',
+  "strapi::errors",
   {
-    name: 'strapi::security',
+    name: "strapi::security",
     config: {
       contentSecurityPolicy: {
         useDefaults: true,
         directives: {
-          'connect-src': ["'self'", 'https:', 'blob:'],
-          'img-src': [
+          "connect-src": ["'self'", "https:", "blob:"],
+          "img-src": [
             "'self'",
-            'data:',
-            'blob:',
-            'market-assets.strapi.io',
-            'https://res.cloudinary.com'
+            "data:",
+            "blob:",
+            "market-assets.strapi.io",
+            "https://res.cloudinary.com",
           ],
-          'media-src': [
+          "media-src": ["'self'", "data:", "blob:", "market-assets.strapi.io"],
+          "script-src": [
             "'self'",
-            'data:',
-            'blob:',
-            'market-assets.strapi.io'
+            "'unsafe-inline'",
+            "https://js.stripe.com",
+            "blob:",
           ],
-          'script-src': [
+          "style-src": ["'self'", "'unsafe-inline'", "https:"],
+          "frame-src": [
             "'self'",
-            "'unsafe-inline'",  // Necesario para Stripe
-            'https://js.stripe.com',
-            'blob:'
+            "https://js.stripe.com",
+            "https://hooks.stripe.com",
           ],
-          'style-src': [
-            "'self'",
-            "'unsafe-inline'",  // Necesario para Stripe
-            'https:'
-          ],
-          'frame-src': [
-            "'self'",
-            'https://js.stripe.com',
-            'https://hooks.stripe.com'
-          ],
-          'font-src': ["'self'", 'https:', 'data:'],
+          "font-src": ["'self'", "https:", "data:"],
         },
       },
     },
   },
   {
-    name: 'strapi::cors',
+    name: "strapi::cors",
     config: {
       enabled: true,
-      headers: '*',
+      headers: "*",
       origin: [
-        'http://localhost:3000',
-        'http://localhost:1337', 
-        'https://ecommerce-allmyrecords.vercel.app',
-        'https://sprint-9-ecommerce.onrender.com'
-      ]
-    }
+        "http://localhost:3000",
+        "http://localhost:1337",
+        "https://ecommerce-allmyrecords.vercel.app",
+        "https://sprint-9-ecommerce.onrender.com",
+      ],
+    },
   },
-  'strapi::poweredBy',
-  'strapi::logger',
-  'strapi::query',
-  'strapi::body',
-  'strapi::session',
-  'strapi::favicon',
-  'strapi::public',
+  "strapi::poweredBy",
+  "strapi::logger",
+  "strapi::query",
+  "strapi::body",
+  "strapi::session",
+  "strapi::favicon",
+  "strapi::public",
 ];
