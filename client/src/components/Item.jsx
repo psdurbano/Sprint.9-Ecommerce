@@ -4,8 +4,10 @@ import { Box, Typography, useTheme, Fade } from "@mui/material";
 import { addToCart } from "../state";
 import { useNavigate } from "react-router-dom";
 import { getImageUrl } from "../utils/imageHelper";
-import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
+import AddIcon from "@mui/icons-material/Add";
 import CheckIcon from "@mui/icons-material/Check";
+
+import { shades } from "../theme";
 
 const Item = ({ item, style }) => {
   const theme = useTheme();
@@ -22,7 +24,6 @@ const Item = ({ item, style }) => {
       const isItemInCart = cart.some((cartItem) => cartItem.id === item.id);
       if (!isItemInCart) {
         setIsAdding(true);
-        // Pequeña animación de feedback
         setTimeout(() => {
           dispatch(addToCart({ item: { ...item, count: 1 } }));
           setIsAdding(false);
@@ -65,7 +66,7 @@ const Item = ({ item, style }) => {
       >
         <Box
           sx={{
-            backgroundColor: theme.palette.neutral.light,
+            backgroundColor: shades.neutral[100],
             aspectRatio: '1 / 1',
             width: '100%',
           }}
@@ -88,7 +89,7 @@ const Item = ({ item, style }) => {
         position: 'relative',
         transition: 'all 0.3s ease',
         '&:hover': {
-          transform: 'translateY(-4px)',
+          transform: 'translateY(-2px)',
         },
         ...style
       }}
@@ -97,7 +98,7 @@ const Item = ({ item, style }) => {
       <Box
         sx={{
           aspectRatio: '1 / 1',
-          backgroundColor: theme.palette.neutral.light,
+          backgroundColor: shades.neutral[100],
           marginBottom: 3,
           overflow: 'hidden',
           position: 'relative',
@@ -115,66 +116,132 @@ const Item = ({ item, style }) => {
             objectFit: 'cover',
             opacity: imageLoaded ? 1 : 0,
             transition: 'all 0.5s ease',
-            transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+            transform: isHovered ? 'scale(1.02)' : 'scale(1)',
           }}
         />
         
-        {/* In Cart Badge */}
+        {/* In Cart Badge - Sutil */}
         {isItemInCart && (
           <Fade in={isItemInCart}>
             <Box
               sx={{
                 position: 'absolute',
-                top: 12,
-                right: 12,
+                top: 8,
+                right: 8,
                 backgroundColor: theme.palette.primary.main,
                 color: 'white',
-                padding: '6px 12px',
-                fontSize: '0.7rem',
+                padding: '4px 8px',
+                fontSize: '0.65rem',
                 fontWeight: 500,
-                letterSpacing: 0.5,
+                letterSpacing: 0.3,
                 textTransform: 'uppercase',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 0.5,
+                gap: 0.3,
+                fontFamily: theme.typography.fontFamily,
+                borderRadius: 0,
               }}
             >
-              <CheckIcon sx={{ fontSize: 16 }} />
+              <CheckIcon sx={{ fontSize: 14 }} />
               In Cart
             </Box>
           </Fade>
         )}
 
-        {/* Add to Cart Overlay */}
+        {/* ✅ OVERLAY SUTIL Y ELEGANTE */}
         {!isItemInCart && (
           <Fade in={isHovered}>
             <Box
               onClick={handleAddToCart}
               sx={{
                 position: 'absolute',
-                bottom: 0,
+                top: 0,
                 left: 0,
                 right: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                color: 'white',
-                padding: 2,
-                textAlign: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.4)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 1,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
                 '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                  '& .add-button': {
+                    transform: 'scale(1.05)',
+                    backgroundColor: theme.palette.primary.main,
+                  }
                 },
               }}
             >
-              <AddShoppingCartIcon sx={{ fontSize: 18 }} />
-              <Typography variant="body2" sx={{ fontWeight: 500, letterSpacing: 0.5 }}>
-                {isAdding ? 'ADDING...' : 'ADD TO CART'}
-              </Typography>
+              {/* Botón circular sutil */}
+              <Box
+                className="add-button"
+                sx={{
+                  width: 44,
+                  height: 44,
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  border: `1px solid ${theme.palette.divider}`,
+                }}
+              >
+                {isAdding ? (
+                  <Box
+                    sx={{
+                      width: 16,
+                      height: 16,
+                      border: `2px solid ${theme.palette.primary.main}`,
+                      borderTop: '2px solid transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite',
+                      '@keyframes spin': {
+                        '0%': { transform: 'rotate(0deg)' },
+                        '100%': { transform: 'rotate(360deg)' },
+                      }
+                    }}
+                  />
+                ) : (
+                  <AddIcon 
+                    sx={{ 
+                      fontSize: 20, 
+                      color: theme.palette.text.primary,
+                      transition: 'color 0.3s ease',
+                    }} 
+                  />
+                )}
+              </Box>
             </Box>
+          </Fade>
+        )}
+
+        {/* Texto sutil en hover - Solo aparece al hacer hover */}
+        {!isItemInCart && isHovered && (
+          <Fade in={isHovered}>
+            <Typography
+              variant="caption"
+              sx={{
+                position: 'absolute',
+                bottom: 12,
+                left: 0,
+                right: 0,
+                textAlign: 'center',
+                color: 'white',
+                fontFamily: theme.typography.fontFamily,
+                fontSize: '0.7rem',
+                fontWeight: 400,
+                letterSpacing: '0.3px',
+                textTransform: 'uppercase',
+                textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                opacity: 0.9,
+              }}
+            >
+              {isAdding ? 'Adding...' : 'Add to Cart'}
+            </Typography>
           </Fade>
         )}
       </Box>
@@ -192,6 +259,7 @@ const Item = ({ item, style }) => {
             marginBottom: 1,
             fontSize: '0.7rem',
             opacity: 0.8,
+            fontFamily: theme.typography.fontFamily,
           }}
         >
           {category}
@@ -207,7 +275,7 @@ const Item = ({ item, style }) => {
             fontSize: '1rem',
             lineHeight: 1.4,
             letterSpacing: '-0.2px',
-            fontFamily: "'Fauna One', serif",
+            fontFamily: theme.typography.fontFamily,
             minHeight: '2.8rem',
             display: '-webkit-box',
             WebkitLineClamp: 2,
@@ -232,39 +300,11 @@ const Item = ({ item, style }) => {
               color: 'primary.main',
               fontSize: '1.1rem',
               letterSpacing: '-0.5px',
+              fontFamily: theme.typography.fontFamily,
             }}
           >
             €{price.toFixed(2)}
           </Typography>
-          
-          {/* Desktop Add Button */}
-          {!isItemInCart && (
-            <Box
-              component="button"
-              onClick={handleAddToCart}
-              sx={{
-                color: 'text.primary',
-                fontSize: '0.75rem',
-                fontWeight: 500,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-                padding: '8px 16px',
-                border: `1px solid ${theme.palette.divider}`,
-                backgroundColor: 'transparent',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                display: { xs: 'none', sm: 'block' },
-                fontFamily: 'inherit',
-                '&:hover': {
-                  backgroundColor: 'primary.main',
-                  color: 'white',
-                  borderColor: 'primary.main',
-                },
-              }}
-            >
-              {isAdding ? 'ADDING...' : 'ADD TO CART'}
-            </Box>
-          )}
         </Box>
       </Box>
     </Box>

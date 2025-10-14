@@ -11,11 +11,7 @@ import "react-responsive-carousel/lib/styles/carousel.min.css";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 
-// Importación profesional de imágenes
-import joanJettImage from "../../assets/joan-jett-1.jpg";
-import johnColtraneImage from "../../assets/john-coltrane-1.jpg";
-import michaelJacksonImage from "../../assets/michael-jackson-1.jpg";
-import arethaFranklinImage from "../../assets/aretha-franklin-1.jpg";
+import { shades } from "../../theme";
 
 const CAROUSEL_CONFIG = {
   autoPlay: true,
@@ -23,31 +19,47 @@ const CAROUSEL_CONFIG = {
   transitionTime: 800,
   infiniteLoop: true,
   showThumbs: false,
-  showIndicators: false, // Desactivamos indicadores nativos para usar personalizados
+  showIndicators: false,
   showStatus: false,
   stopOnHover: true,
 };
 
-const GENRES = [
+const CAROUSEL_IMAGES = [
   { 
-    name: "Rock", 
-    value: "rock", 
-    subtitle: "Powerful beats and raw energy" 
+    image: "images/carousel/joan-jett-rock.webp",
+    genre: { 
+      name: "Rock", 
+      value: "rock", 
+      subtitle: "Powerful beats and raw energy" 
+    },
+    alt: "Joan Jett performing live - Iconic rock artist representing the Rock genre"
   },
   { 
-    name: "Jazz", 
-    value: "jazz", 
-    subtitle: "Smooth rhythms and improvisation" 
+    image: "/images/carousel/john-coltrane-jazz.webp",
+    genre: { 
+      name: "Jazz", 
+      value: "jazz", 
+      subtitle: "Smooth rhythms and improvisation" 
+    },
+    alt: "John Coltrane playing saxophone - Legendary jazz musician representing the Jazz genre"
   },
   { 
-    name: "Pop", 
-    value: "pop", 
-    subtitle: "Catchy melodies and vibrant tunes" 
+    image: "/images/carousel/michael-jackson-pop.webp",
+    genre: { 
+      name: "Pop", 
+      value: "pop", 
+      subtitle: "Catchy melodies and vibrant tunes" 
+    },
+    alt: "Michael Jackson in concert - King of Pop representing the Pop genre"
   },
   { 
-    name: "Soul", 
-    value: "soul", 
-    subtitle: "Soulful vocals and emotional depth" 
+    image: "images/carousel/aretha-franklin-soul.webp",
+    genre: { 
+      name: "Soul", 
+      value: "soul", 
+      subtitle: "Soulful vocals and emotional depth" 
+    },
+    alt: "Aretha Franklin performing - Queen of Soul representing the Soul genre"
   },
 ];
 
@@ -57,15 +69,8 @@ const MainCarousel = () => {
   const isTablet = useMediaQuery(theme.breakpoints.down("md"));
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Importación profesional de imágenes con useMemo
-  const carouselImages = useMemo(() => [
-    { image: joanJettImage, genre: GENRES[0] },     // ROCK
-    { image: johnColtraneImage, genre: GENRES[1] }, // JAZZ  
-    { image: michaelJacksonImage, genre: GENRES[2] }, // POP
-    { image: arethaFranklinImage, genre: GENRES[3] }, // SOUL
-  ], []);
+  const carouselImages = useMemo(() => CAROUSEL_IMAGES, []);
 
-  // Responsive calculations using theme
   const responsiveValues = useMemo(() => ({
     arrowPosition: isMobile ? "8px" : "20px",
     titleFontSize: isMobile ? "2rem" : isTablet ? "3rem" : "4rem",
@@ -78,7 +83,6 @@ const MainCarousel = () => {
     buttonFontSize: isMobile ? "0.8rem" : "0.9rem",
   }), [isMobile, isTablet]);
 
-  // Event handlers
   const handleGenreClick = useCallback((genreValue) => {
     sessionStorage.setItem('selectedCategory', genreValue);
     
@@ -101,7 +105,37 @@ const MainCarousel = () => {
     setActiveIndex(index);
   }, []);
 
-  // Arrow component
+  const OptimizedImage = useCallback(({ src, alt, index }) => (
+    <Box
+      sx={{
+        position: "absolute",
+        inset: 0,
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          inset: 0,
+          background: isMobile 
+            ? `linear-gradient(to bottom, ${shades.primary[500]}B3 0%, ${shades.primary[500]}66 50%, ${shades.primary[500]}33 100%)`
+            : `linear-gradient(to right, ${shades.primary[500]}CC 0%, ${shades.primary[500]}66 50%, ${shades.primary[500]}33 100%)`,
+          zIndex: 1,
+        },
+      }}
+    >
+      <img
+        src={src}
+        alt={alt}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          filter: "brightness(0.9) contrast(1.1)",
+        }}
+        loading={index === 0 ? "eager" : "lazy"}
+        fetchpriority={index === 0 ? "high" : "low"}
+      />
+    </Box>
+  ), [isMobile]);
+
   const CarouselArrow = useCallback(({ direction, onClickHandler, hasArrow }) => {
     if (!hasArrow) return null;
 
@@ -136,8 +170,7 @@ const MainCarousel = () => {
     );
   }, [responsiveValues.arrowPosition, isMobile, theme]);
 
-  // Carousel slide component
-  const CarouselSlide = useCallback(({ image, genre, index }) => (
+  const CarouselSlide = useCallback(({ imageData, index }) => (
     <Box
       sx={{
         position: "relative",
@@ -145,36 +178,13 @@ const MainCarousel = () => {
         overflow: "hidden",
       }}
     >
-      {/* Image with gradient overlay */}
-      <Box
-        sx={{
-          position: "absolute",
-          inset: 0,
-          "&::before": {
-            content: '""',
-            position: "absolute",
-            inset: 0,
-            background: isMobile 
-              ? `linear-gradient(to bottom, rgba(45,44,47,0.7) 0%, rgba(45,44,47,0.4) 50%, rgba(45,44,47,0.2) 100%)`
-              : `linear-gradient(to right, rgba(45,44,47,0.8) 0%, rgba(45,44,47,0.4) 50%, rgba(45,44,47,0.2) 100%)`,
-            zIndex: 1,
-          },
-        }}
-      >
-        <img
-          src={image}
-          alt={`${genre?.name || 'Music'} genre showcase`}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            filter: "brightness(0.9) contrast(1.1)",
-          }}
-          loading={index === 0 ? "eager" : "lazy"}
-        />
-      </Box>
+      <OptimizedImage 
+        src={imageData.image} 
+        alt={imageData.alt}
+        index={index}
+      />
 
-      {/* Text content - POSITIONED TO LEFT */}
+      {/* Text Content */}
       <Box
         sx={{
           position: "absolute",
@@ -207,10 +217,10 @@ const MainCarousel = () => {
 
         <Typography
           component="h1"
-          onClick={() => genre && handleGenreClick(genre.value)}
+          onClick={() => imageData.genre && handleGenreClick(imageData.genre.value)}
           sx={{
-            fontFamily: "'Cinzel', serif",
-            fontWeight: 600,
+            fontFamily: theme.typography.h1.fontFamily,
+            fontWeight: 700,
             textTransform: "uppercase",
             fontSize: responsiveValues.titleFontSize,
             mb: 2,
@@ -218,18 +228,18 @@ const MainCarousel = () => {
             letterSpacing: "0.02em",
             lineHeight: 1.1,
             textShadow: "2px 2px 20px rgba(0,0,0,0.5)",
-            cursor: genre ? "pointer" : "default",
+            cursor: imageData.genre ? "pointer" : "default",
             transition: "all 0.3s ease",
-            "&:hover": genre ? {
+            "&:hover": imageData.genre ? {
               transform: "translateY(-2px)",
               color: theme.palette.secondary.main,
             } : {},
             wordWrap: "break-word",
             overflowWrap: "break-word",
           }}
-          aria-label={genre ? `Explore ${genre.name} albums` : undefined}
+          aria-label={imageData.genre ? `Explore ${imageData.genre.name} albums` : undefined}
         >
-          {genre?.name || "Discover Music"}
+          {imageData.genre?.name || "Discover Music"}
         </Typography>
 
         <Typography
@@ -245,18 +255,18 @@ const MainCarousel = () => {
             textShadow: "1px 1px 10px rgba(0,0,0,0.7)",
             mb: 4,
             opacity: 0.9,
-            fontFamily: "'Fauna One', serif",
+            fontFamily: theme.typography.fontFamily,
             marginLeft: isMobile ? "auto" : 0,
             marginRight: isMobile ? "auto" : "auto",
           }}
         >
-          {genre?.subtitle || "Explore our curated collection of vinyl records"}
+          {imageData.genre?.subtitle || "Explore our curated collection of vinyl records"}
         </Typography>
 
-        {genre && (
+        {imageData.genre && (
           <Box
             component="button"
-            onClick={() => handleGenreClick(genre.value)}
+            onClick={() => handleGenreClick(imageData.genre.value)}
             sx={{
               padding: responsiveValues.buttonPadding,
               backgroundColor: "transparent",
@@ -269,7 +279,7 @@ const MainCarousel = () => {
               cursor: "pointer",
               transition: "all 0.3s ease",
               borderRadius: 0,
-              fontFamily: "'Fauna One', serif",
+              fontFamily: theme.typography.fontFamily,
               "&:hover": {
                 backgroundColor: theme.palette.secondary.main,
                 color: theme.palette.primary.main,
@@ -284,16 +294,21 @@ const MainCarousel = () => {
               marginLeft: isMobile ? "auto" : 0,
               marginRight: isMobile ? "auto" : "auto",
             }}
-            aria-label={`Find ${genre.name} albums`}
+            aria-label={`Find ${imageData.genre.name} albums`}
           >
-            Explore {genre.name}
+            Explore {imageData.genre.name}
           </Box>
         )}
       </Box>
     </Box>
-  ), [responsiveValues, isMobile, theme, activeIndex, handleGenreClick]);
+  ), [
+    responsiveValues, 
+    isMobile, 
+    theme, 
+    activeIndex, 
+    handleGenreClick
+  ]);
 
-  // Custom indicators component
   const CustomIndicators = useCallback(() => (
     <Box
       sx={{
@@ -314,11 +329,11 @@ const MainCarousel = () => {
             width: activeIndex === index ? (isMobile ? "30px" : "40px") : (isMobile ? "8px" : "10px"),
             height: isMobile ? "8px" : "10px",
             borderRadius: "5px",
-            backgroundColor: activeIndex === index ? "#FFC709" : "rgba(255, 255, 255, 0.4)",
+            backgroundColor: activeIndex === index ? theme.palette.secondary.main : "rgba(255, 255, 255, 0.4)",
             cursor: "pointer",
             transition: "all 0.3s ease",
             "&:hover": {
-              backgroundColor: activeIndex === index ? "#FFC709" : "rgba(255, 255, 255, 0.7)",
+              backgroundColor: activeIndex === index ? theme.palette.secondary.main : "rgba(255, 255, 255, 0.7)",
             },
           }}
           aria-label={`Go to slide ${index + 1}`}
@@ -332,7 +347,7 @@ const MainCarousel = () => {
         />
       ))}
     </Box>
-  ), [carouselImages, activeIndex, responsiveValues.indicatorBottom, isMobile]);
+  ), [carouselImages, activeIndex, responsiveValues.indicatorBottom, isMobile, theme]);
 
   return (
     <Box
@@ -363,11 +378,10 @@ const MainCarousel = () => {
           />
         )}
       >
-        {carouselImages.map((item, index) => (
+        {carouselImages.map((imageData, index) => (
           <CarouselSlide
-            key={`carousel-slide-${index}`}
-            image={item.image}
-            genre={item.genre}
+            key={`carousel-slide-${imageData.genre.value}`}
+            imageData={imageData}
             index={index}
           />
         ))}
