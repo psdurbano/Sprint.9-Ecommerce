@@ -2,7 +2,6 @@ export const getImageUrl = (item) => {
   const imageUrl = item?.attributes?.image?.data?.attributes?.url;
   const formats = item?.attributes?.image?.data?.attributes?.formats;
 
-  // Cloudinary provides full URLs, no need to prepend base URL
   if (formats?.medium?.url) {
     return formats.medium.url;
   }
