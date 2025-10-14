@@ -1,126 +1,178 @@
-import React, { useState } from "react";
-import { Formik, Form, Field } from "formik";
-import * as Yup from "yup";
-import {
-  Button,
-  TextField,
-  Typography,
-  Box,
-  Alert,
-  AlertTitle,
-} from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import React from "react";
+import { Box, Button, TextField, Typography, Alert, Grid } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-
-const SignupSchema = Yup.object().shape({
-  firstName: Yup.string()
-    .max(50, "El nombre es demasiado largo")
-    .required("Este campo es obligatorio"),
-  lastName: Yup.string()
-    .max(50, "El apellido es demasiado largo")
-    .required("Este campo es obligatorio"),
-  email: Yup.string()
-    .email("Dirección de correo inválida")
-    .required("Este campo es obligatorio"),
-});
+import { shades } from "../../theme";
+import { Formik } from "formik";
+import * as Yup from "yup";
+import { useNavigate } from "react-router-dom";
 
 const SignupForm = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [showAlert, setShowAlert] = useState(false);
 
-  const handleSubmit = async (values) => {
-    localStorage.setItem("firstName", values.firstName);
-    localStorage.setItem("lastName", values.lastName);
-    localStorage.setItem("email", values.email);
+  const initialValues = {
+    firstName: "",
+    lastName: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  };
 
-    setShowAlert(true);
+  const validationSchema = Yup.object({
+    firstName: Yup.string().required("First name is required"),
+    lastName: Yup.string().required("Last name is required"),
+    email: Yup.string()
+      .email("Invalid email address")
+      .required("Email is required"),
+    password: Yup.string()
+      .min(6, "Password must be at least 6 characters")
+      .required("Password is required"),
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref("password"), null], "Passwords must match")
+      .required("Confirm your password"),
+  });
+
+  const handleSubmit = (values, { resetForm, setStatus }) => {
+    console.log("Form data:", values);
+    setStatus({ success: true });
 
     setTimeout(() => {
-      setShowAlert(false);
+      resetForm();
+      setStatus({ success: false });
       navigate("/");
-    }, 1500);
+    }, 2000);
   };
 
   return (
     <Box
-      width={{ xs: "90%", sm: "85%", md: "80%" }}
-      maxWidth={{ md: 1000, lg: 1000, xl: 1000 }}
-      m={`${theme.spacing(12.5)} auto`}
+      width={{ xs: "95%", sm: "90%", md: "80%" }}
+      maxWidth={600}
+      margin="0 auto"
+      sx={{ px: { xs: 2, sm: 3 }, py: { xs: 4, sm: 6 } }}
     >
-      <Box sx={{ width: "100%" }}>
-        <Typography variant="h3" align="center" gutterBottom sx={{ color: theme.palette.neutral.dark }}>
-          Sign up
-        </Typography>
-        <Formik
-          initialValues={{ firstName: "", lastName: "", email: "" }}
-          validationSchema={SignupSchema}
-          onSubmit={handleSubmit}
-        >
-          {({ errors, touched }) => (
-            <Form>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: theme.spacing(1.875) }}>
-                <Field
-                  name="firstName"
-                  as={TextField}
-                  label="Name"
-                  variant="outlined"
-                  size="medium"
+      <Typography
+        variant="h3"
+        align="center"
+        sx={{
+          mb: theme.spacing(3),
+          color: shades.primary[500],
+          fontFamily: theme.typography.h3.fontFamily,
+          fontWeight: 600,
+          fontSize: { xs: "1.5rem", sm: "1.75rem" },
+        }}
+      >
+        Create Account
+      </Typography>
+
+      <Formik
+        initialValues={initialValues}
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
+      >
+        {({ values, errors, touched, handleChange, handleBlur, handleSubmit, status }) => (
+          <form onSubmit={handleSubmit} noValidate>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
                   fullWidth
+                  label="First Name"
+                  name="firstName"
+                  value={values.firstName}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={touched.firstName && Boolean(errors.firstName)}
                   helperText={touched.firstName && errors.firstName}
-                />
-                <Field
-                  name="lastName"
-                  as={TextField}
-                  label="Last Name"
-                  variant="outlined"
                   size="medium"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
                   fullWidth
+                  label="Last Name"
+                  name="lastName"
+                  value={values.lastName}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={touched.lastName && Boolean(errors.lastName)}
                   helperText={touched.lastName && errors.lastName}
-                />
-                <Field
-                  name="email"
-                  as={TextField}
-                  label="Email"
-                  variant="outlined"
                   size="medium"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
                   fullWidth
+                  label="Email"
+                  name="email"
+                  value={values.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
                   error={touched.email && Boolean(errors.email)}
                   helperText={touched.email && errors.email}
+                  size="medium"
                 />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Password"
+                  name="password"
+                  type="password"
+                  value={values.password}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.password && Boolean(errors.password)}
+                  helperText={touched.password && errors.password}
+                  size="medium"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Confirm Password"
+                  name="confirmPassword"
+                  type="password"
+                  value={values.confirmPassword}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.confirmPassword && Boolean(errors.confirmPassword)}
+                  helperText={touched.confirmPassword && errors.confirmPassword}
+                  size="medium"
+                />
+              </Grid>
+              <Grid item xs={12}>
                 <Button
+                  fullWidth
                   type="submit"
                   variant="contained"
-                  color="primary"
                   sx={{
-                    backgroundColor: theme.palette.primary.main,
-                    boxShadow: "none",
-                    color: theme.palette.common.white,
-                    borderRadius: 0,
-                    px: theme.spacing(5),
-                    py: theme.spacing(2),
+                    backgroundColor: shades.primary[500],
+                    color: "#fff",
+                    borderRadius: "2px",
                     textTransform: "none",
-                    "&:hover": { backgroundColor: theme.palette.primary.dark, boxShadow: "none" },
+                    fontWeight: 600,
+                    py: 1.5,
+                    "&:hover": {
+                      backgroundColor: shades.primary[600],
+                    },
                   }}
                 >
-                  Submit!
+                  Sign Up
                 </Button>
-              </Box>
-            </Form>
-          )}
-        </Formik>
-        <Box m={`${theme.spacing(11.25)} auto`} width="100%">
-          {showAlert && (
-            <Alert severity="success">
-              <AlertTitle>Success</AlertTitle>
-              You have successfully registered! —{" "}
-              <strong>Welcome to allmyrecords!</strong>
-            </Alert>
-          )}
-        </Box>
-      </Box>
+              </Grid>
+              {status?.success && (
+                <Grid item xs={12}>
+                  <Alert
+                    severity="success"
+                    sx={{ mt: 2, textAlign: "center", fontFamily: theme.typography.fontFamily }}
+                  >
+                    Account created successfully!
+                  </Alert>
+                </Grid>
+              )}
+            </Grid>
+          </form>
+        )}
+      </Formik>
     </Box>
   );
 };
