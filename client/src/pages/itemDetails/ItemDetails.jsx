@@ -11,10 +11,10 @@ import {
   Alert,
   Breadcrumbs,
   Link as MuiLink,
+  useTheme,
 } from "@mui/material";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { useTheme } from "@mui/material/styles";
 import FavoriteBorderOutlinedIcon from "@mui/icons-material/FavoriteBorderOutlined";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import HomeIcon from "@mui/icons-material/Home";
@@ -24,6 +24,7 @@ import { addToCart, removeFromCart } from "../../state";
 import Item from "../../components/Item";
 import { getImageUrl } from "../../utils/imageHelper";
 import { API_ENDPOINTS } from "../../utils/apiConfig";
+import { shades } from "../../theme";
 
 const ItemDetails = () => {
   const theme = useTheme();
@@ -202,70 +203,76 @@ const ItemDetails = () => {
   const buttonStyles = useMemo(
     () => ({
       notInCartButton: {
-        color: "#000",
-        fontSize: "12px",
-        fontWeight: 400,
+        color: theme.palette.text.primary,
+        fontSize: "0.75rem",
+        fontWeight: 500,
         textTransform: "uppercase",
         letterSpacing: "0.5px",
         padding: "12px 24px",
-        border: "1px solid #000",
-        backgroundColor: "#fff",
+        border: `1px solid ${theme.palette.text.primary}`,
+        backgroundColor: "transparent",
         cursor: "pointer",
         transition: "all 0.3s ease",
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: theme.typography.fontFamily,
         minWidth: "150px",
+        borderRadius: 0,
         "&:hover": {
-          backgroundColor: "#000",
-          color: "#fff",
+          backgroundColor: theme.palette.text.primary,
+          color: theme.palette.background.paper,
+          transform: "translateY(-1px)",
         },
         "&:focus-visible": {
-          outline: "2px solid #000",
+          outline: `2px solid ${theme.palette.primary.main}`,
           outlineOffset: "2px",
         },
       },
       inCartButton: {
-        color: "#fff",
-        fontSize: "12px",
-        fontWeight: 400,
+        color: theme.palette.background.paper,
+        fontSize: "0.75rem",
+        fontWeight: 500,
         textTransform: "uppercase",
         letterSpacing: "0.5px",
         padding: "12px 24px",
-        border: "1px solid #000",
-        backgroundColor: "#000",
+        border: `1px solid ${theme.palette.primary.main}`,
+        backgroundColor: theme.palette.primary.main,
         cursor: "pointer",
         transition: "all 0.3s ease",
-        fontFamily: "system-ui, sans-serif",
+        fontFamily: theme.typography.fontFamily,
         minWidth: "150px",
+        borderRadius: 0,
         "&:hover": {
-          backgroundColor: "#333",
+          backgroundColor: theme.palette.primary.dark,
+          borderColor: theme.palette.primary.dark,
+          transform: "translateY(-1px)",
         },
         "&:focus-visible": {
-          outline: "2px solid #000",
+          outline: `2px solid ${theme.palette.primary.main}`,
           outlineOffset: "2px",
         },
       },
     }),
-    []
+    [theme]
   );
 
   if (isLoading) {
     return (
       <Box
         width={{ xs: "90%", sm: "85%", md: "80%" }}
-        maxWidth={{ md: 1200, lg: 1200, xl: 1200 }}
-        m={`${theme.spacing(12.5)} auto`}
+        maxWidth={1200}
+        m={`${theme.spacing(8)} auto`}
+        sx={{ px: { xs: 2, sm: 3 } }}
       >
-        <Box display="flex" flexWrap="wrap" columnGap="40px">
-          <Box flex="1 1 40%" mb="40px">
+        <Box display="flex" flexDirection={{ xs: "column", md: "row" }} gap={4}>
+          <Box flex="1 1 40%">
             <Skeleton
               variant="rectangular"
               width="100%"
               height={400}
-              sx={{ borderRadius: "8px" }}
+              sx={{ borderRadius: 0 }}
             />
           </Box>
 
-          <Box flex="1 1 50%" mb="40px">
+          <Box flex="1 1 50%">
             <Skeleton variant="text" height={40} width="60%" />
             <Skeleton variant="text" height={30} width="40%" sx={{ mt: 2 }} />
             <Skeleton variant="text" height={100} width="100%" sx={{ mt: 3 }} />
@@ -273,7 +280,7 @@ const ItemDetails = () => {
               variant="rectangular"
               height={45}
               width={150}
-              sx={{ mt: 3 }}
+              sx={{ mt: 3, borderRadius: 0 }}
             />
           </Box>
         </Box>
@@ -285,8 +292,9 @@ const ItemDetails = () => {
     return (
       <Box
         width={{ xs: "90%", sm: "85%", md: "80%" }}
-        maxWidth={{ md: 1200, lg: 1200, xl: 1200 }}
-        m={`${theme.spacing(12.5)} auto`}
+        maxWidth={1200}
+        m={`${theme.spacing(8)} auto`}
+        sx={{ px: { xs: 2, sm: 3 } }}
       >
         <Alert
           severity="error"
@@ -296,20 +304,28 @@ const ItemDetails = () => {
               color="inherit"
               size="small"
               onClick={() => window.location.reload()}
+              sx={{ fontFamily: theme.typography.fontFamily }}
             >
               RETRY
             </Button>
           }
         >
-          <Typography variant="h6" gutterBottom>
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{ fontFamily: theme.typography.fontFamily }}
+          >
             Failed to load item
           </Typography>
-          {error}
+          <Typography sx={{ fontFamily: theme.typography.fontFamily }}>
+            {error}
+          </Typography>
         </Alert>
         <Button
           variant="outlined"
           onClick={() => navigate("/")}
           startIcon={<HomeIcon />}
+          sx={{ fontFamily: theme.typography.fontFamily }}
         >
           Back to Home
         </Button>
@@ -321,21 +337,35 @@ const ItemDetails = () => {
     return (
       <Box
         width={{ xs: "90%", sm: "85%", md: "80%" }}
-        maxWidth={{ md: 1200, lg: 1200, xl: 1200 }}
-        m={`${theme.spacing(12.5)} auto`}
+        maxWidth={1200}
+        m={`${theme.spacing(8)} auto`}
         textAlign="center"
+        sx={{ px: { xs: 2, sm: 3 } }}
       >
-        <Typography variant="h4" gutterBottom>
+        <Typography
+          variant="h4"
+          gutterBottom
+          sx={{ fontFamily: theme.typography.fontFamily }}
+        >
           Item Not Found
         </Typography>
-        <Typography variant="body1" color="text.secondary" gutterBottom>
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          gutterBottom
+          sx={{ fontFamily: theme.typography.fontFamily }}
+        >
           The item you're looking for doesn't exist or has been removed.
         </Typography>
         <Button
           variant="contained"
           onClick={() => navigate("/")}
           startIcon={<HomeIcon />}
-          sx={{ mt: 2 }}
+          sx={{
+            mt: 2,
+            fontFamily: theme.typography.fontFamily,
+            borderRadius: 0,
+          }}
         >
           Return to Homepage
         </Button>
@@ -346,29 +376,46 @@ const ItemDetails = () => {
   return (
     <Box
       width={{ xs: "90%", sm: "85%", md: "80%" }}
-      maxWidth={{ md: 1200, lg: 1200, xl: 1200 }}
-      m={`${theme.spacing(12.5)} auto`}
+      maxWidth={1200}
+      m={`${theme.spacing(8)} auto`}
+      sx={{ px: { xs: 2, sm: 3 } }}
     >
-      <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 3 }}>
+      <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 4 }}>
         <MuiLink
           component={Link}
           to="/"
           color="inherit"
-          sx={{ display: "flex", alignItems: "center" }}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            fontFamily: theme.typography.fontFamily,
+            "&:hover": { color: theme.palette.primary.main },
+          }}
         >
           <HomeIcon sx={{ mr: 0.5 }} fontSize="small" />
           Home
         </MuiLink>
-        <Typography color="text.primary">{item.attributes.name}</Typography>
+        <Typography
+          color="text.primary"
+          sx={{ fontFamily: theme.typography.fontFamily }}
+        >
+          {item.attributes.name}
+        </Typography>
       </Breadcrumbs>
 
-      <Box display="flex" flexWrap="wrap" columnGap="40px">
-        <Box flex="1 1 40%" mb="40px" position="relative">
+      <Box
+        display="flex"
+        flexDirection={{ xs: "column", md: "row" }}
+        gap={4}
+        mb={6}
+      >
+        <Box flex="1 1 40%">
           <Box
             sx={{
               position: "relative",
               overflow: "hidden",
-              backgroundColor: "#f8f8f8",
+              backgroundColor: shades.neutral[100],
+              border: `1px solid ${theme.palette.divider}`,
             }}
           >
             <img
@@ -389,21 +436,18 @@ const ItemDetails = () => {
                 variant="rectangular"
                 width="100%"
                 height={400}
-                sx={{ borderRadius: "8px" }}
+                sx={{ borderRadius: 0 }}
               />
             )}
           </Box>
         </Box>
 
-        <Box flex="1 1 50%" mb="40px">
+        <Box flex="1 1 50%">
           <Box
             display="flex"
             justifyContent="space-between"
             alignItems="center"
-            sx={{
-              mb: 4,
-              py: 1,
-            }}
+            sx={{ mb: 4, py: 1 }}
           >
             <Box
               component={Link}
@@ -414,9 +458,8 @@ const ItemDetails = () => {
                 textDecoration: "none",
                 color: "text.secondary",
                 transition: "all 0.2s ease",
-                "&:hover": {
-                  color: "text.primary",
-                },
+                fontFamily: theme.typography.fontFamily,
+                "&:hover": { color: "text.primary" },
               }}
             >
               <HomeIcon sx={{ fontSize: 16, mr: 0.5 }} />
@@ -424,8 +467,9 @@ const ItemDetails = () => {
                 variant="caption"
                 sx={{
                   fontWeight: 400,
-                  fontSize: "11px",
+                  fontSize: "0.7rem",
                   letterSpacing: "0.3px",
+                  fontFamily: theme.typography.fontFamily,
                 }}
               >
                 Store
@@ -441,13 +485,9 @@ const ItemDetails = () => {
                 sx={{
                   padding: "2px",
                   color: "text.secondary",
-                  borderRadius: "1px",
                   "&:hover:not(.Mui-disabled)": {
                     color: "text.primary",
                     backgroundColor: "transparent",
-                  },
-                  "&.Mui-disabled": {
-                    color: "action.disabled",
                   },
                 }}
               >
@@ -471,13 +511,9 @@ const ItemDetails = () => {
                 sx={{
                   padding: "2px",
                   color: "text.secondary",
-                  borderRadius: "1px",
                   "&:hover:not(.Mui-disabled)": {
                     color: "text.primary",
                     backgroundColor: "transparent",
-                  },
-                  "&.Mui-disabled": {
-                    color: "action.disabled",
                   },
                 }}
               >
@@ -491,20 +527,35 @@ const ItemDetails = () => {
               variant="h3"
               component="h1"
               gutterBottom
-              sx={{ fontWeight: "bold" }}
+              sx={{
+                fontWeight: 600,
+                fontFamily: theme.typography.fontFamily,
+                fontSize: { xs: "1.75rem", sm: "2rem", md: "2.25rem" },
+              }}
             >
               {item.attributes.name}
             </Typography>
 
             <Typography
               variant="h4"
-              sx={{ fontWeight: "bold", color: "primary.main", mb: 2 }}
+              sx={{
+                fontWeight: 600,
+                color: "primary.main",
+                mb: 2,
+                fontFamily: theme.typography.fontFamily,
+              }}
             >
               € {item.attributes.price?.toFixed(2) || "N/A"}
             </Typography>
 
             {item.attributes.tracklist && (
-              <Typography variant="body1" sx={{ mb: 2 }}>
+              <Typography
+                variant="body1"
+                sx={{
+                  mb: 2,
+                  fontFamily: theme.typography.fontFamily,
+                }}
+              >
                 <strong>Tracklist:</strong> {item.attributes.tracklist}
               </Typography>
             )}
@@ -515,7 +566,11 @@ const ItemDetails = () => {
                   <Typography
                     key={i}
                     variant="body1"
-                    sx={{ mb: 1.5, lineHeight: 1.6 }}
+                    sx={{
+                      mb: 1.5,
+                      lineHeight: 1.6,
+                      fontFamily: theme.typography.fontFamily,
+                    }}
                   >
                     {line}
                   </Typography>
@@ -546,7 +601,8 @@ const ItemDetails = () => {
               color={isInWishlist ? "error" : "default"}
               sx={{
                 border: `1px solid ${theme.palette.divider}`,
-                "&:hover": { backgroundColor: "action.hover" },
+                borderRadius: 0,
+                "&:hover": { backgroundColor: shades.neutral[50] },
               }}
             >
               {isInWishlist ? <FavoriteIcon /> : <FavoriteBorderOutlinedIcon />}
@@ -554,7 +610,11 @@ const ItemDetails = () => {
           </Box>
 
           <Box>
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontFamily: theme.typography.fontFamily }}
+            >
               <strong>Category:</strong> {item.attributes.category || "Unknown"}
             </Typography>
           </Box>
@@ -572,12 +632,14 @@ const ItemDetails = () => {
             value="description"
             id="tab-description"
             aria-controls="tabpanel-description"
+            sx={{ fontFamily: theme.typography.fontFamily }}
           />
           <Tab
             label="CONDITION"
             value="condition"
             id="tab-condition"
             aria-controls="tabpanel-condition"
+            sx={{ fontFamily: theme.typography.fontFamily }}
           />
         </Tabs>
       </Box>
@@ -595,7 +657,11 @@ const ItemDetails = () => {
                 <Typography
                   key={i}
                   variant="body1"
-                  sx={{ mb: 2, lineHeight: 1.6 }}
+                  sx={{
+                    mb: 2,
+                    lineHeight: 1.6,
+                    fontFamily: theme.typography.fontFamily,
+                  }}
                 >
                   {line}
                 </Typography>
@@ -612,13 +678,19 @@ const ItemDetails = () => {
         >
           <Box sx={{ "& > *": { mb: 1 } }}>
             {item.attributes.mediaCondition && (
-              <Typography variant="body1">
+              <Typography
+                variant="body1"
+                sx={{ fontFamily: theme.typography.fontFamily }}
+              >
                 <strong>Media Condition:</strong>{" "}
                 {item.attributes.mediaCondition}
               </Typography>
             )}
             {item.attributes.sleeveCondition && (
-              <Typography variant="body1">
+              <Typography
+                variant="body1"
+                sx={{ fontFamily: theme.typography.fontFamily }}
+              >
                 <strong>Sleeve Condition:</strong>{" "}
                 {item.attributes.sleeveCondition}
               </Typography>
@@ -634,7 +706,10 @@ const ItemDetails = () => {
             variant="h4"
             component="h2"
             gutterBottom
-            sx={{ fontWeight: "bold" }}
+            sx={{
+              fontWeight: 600,
+              fontFamily: theme.typography.fontFamily,
+            }}
           >
             Related Products
           </Typography>

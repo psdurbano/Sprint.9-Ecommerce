@@ -21,6 +21,8 @@ import { API_ENDPOINTS } from "../../utils/apiConfig";
 import SearchIcon from "@mui/icons-material/Search";
 import TuneIcon from "@mui/icons-material/Tune";
 
+import { shades } from "../../theme";
+
 const CATEGORIES = [
   { label: "ALL", value: "all" },
   { label: "JAZZ", value: "jazz" },
@@ -41,7 +43,7 @@ const ShoppingList = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  
+
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -51,11 +53,11 @@ const ShoppingList = () => {
   const [maxPrice, setMaxPrice] = useState(100);
   const [resultCount, setResultCount] = useState(0);
   const [showFilters, setShowFilters] = useState(!isMobile);
-  
+
   const items = useSelector((state) => state.cart.items || []);
 
-  const handleCategoryChange = useCallback((event, newValue) => {
-    setSelectedCategory(newValue);
+  const handleCategoryChange = useCallback((categoryValue) => {
+    setSelectedCategory(categoryValue);
   }, []);
 
   const handleSearchChange = useCallback((event) => {
@@ -77,20 +79,18 @@ const ShoppingList = () => {
   }, []);
 
   const toggleFilters = useCallback(() => {
-    setShowFilters(prev => !prev);
+    setShowFilters((prev) => !prev);
   }, []);
 
-  // Calculate max price from items
   useEffect(() => {
     if (Array.isArray(items) && items.length > 0) {
-      const prices = items.map(item => item?.attributes?.price || 0);
+      const prices = items.map((item) => item?.attributes?.price || 0);
       const max = Math.max(...prices);
       setMaxPrice(Math.ceil(max));
       setPriceRange([0, Math.ceil(max)]);
     }
   }, [items]);
 
-  // Auto-hide filters on mobile when scrolling
   useEffect(() => {
     if (!isMobile) {
       setShowFilters(true);
@@ -109,10 +109,9 @@ const ShoppingList = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isMobile]);
 
-  // Memoized filtered and sorted items
   const filteredItems = useMemo(() => {
     if (!Array.isArray(items)) return [];
-    
+
     let filtered = items.filter((item) => {
       const itemCategory = item?.attributes?.category?.toLowerCase() || "";
       const itemName = item?.attributes?.name?.toLowerCase() || "";
@@ -124,8 +123,7 @@ const ShoppingList = () => {
         itemCategory === selectedCategory.toLowerCase();
 
       const matchesSearch =
-        searchLower === "" ||
-        itemName.includes(searchLower);
+        searchLower === "" || itemName.includes(searchLower);
 
       const matchesPrice =
         itemPrice >= priceRange[0] && itemPrice <= priceRange[1];
@@ -133,7 +131,6 @@ const ShoppingList = () => {
       return matchesCategory && matchesSearch && matchesPrice;
     });
 
-    // Apply sorting
     if (sortBy !== "featured") {
       filtered = [...filtered].sort((a, b) => {
         const aName = a?.attributes?.name || "";
@@ -159,12 +156,10 @@ const ShoppingList = () => {
     return filtered;
   }, [items, selectedCategory, searchTerm, sortBy, priceRange]);
 
-  // Animate result count
   useEffect(() => {
     setResultCount(filteredItems.length);
   }, [filteredItems]);
 
-  // Event listener for category changes
   useEffect(() => {
     window.addEventListener("categoryChange", handleCategoryEvent);
     return () => {
@@ -172,32 +167,33 @@ const ShoppingList = () => {
     };
   }, [handleCategoryEvent]);
 
-  // Data fetching
   useEffect(() => {
     let isMounted = true;
 
     const fetchItems = async () => {
       if (!isMounted) return;
-      
+
       setIsLoading(true);
       setError(null);
-      
+
       try {
-        const response = await fetch(`${API_ENDPOINTS.items}?populate=image&pagination[limit]=-1`);
-        
+        const response = await fetch(
+          `${API_ENDPOINTS.items}?populate=image&pagination[pageSize]=150&sort=name:asc`
+        );
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (!isMounted) return;
 
         if (data?.data && Array.isArray(data.data)) {
           dispatch(setItems(data.data));
         } else {
           dispatch(setItems([]));
-          console.warn('Unexpected API response structure:', data);
+          console.warn("Unexpected API response structure:", data);
         }
       } catch (err) {
         if (!isMounted) return;
@@ -211,16 +207,12 @@ const ShoppingList = () => {
       }
     };
 
-    if (!Array.isArray(items) || items.length === 0) {
-      fetchItems();
-    } else {
-      setIsLoading(false);
-    }
+    fetchItems();
 
     return () => {
       isMounted = false;
     };
-  }, [dispatch, items]);
+  }, [dispatch]);
 
   const renderContent = () => {
     if (error) {
@@ -236,18 +228,25 @@ const ShoppingList = () => {
             px: 2,
           }}
         >
-          <Typography 
-            variant="h6" 
-            color="text.secondary" 
+          <Typography
+            variant="h6"
+            color="text.secondary"
             gutterBottom
-            sx={{ fontWeight: 400 }}
+            sx={{
+              fontWeight: 400,
+              fontFamily: theme.typography.fontFamily,
+            }}
           >
             Failed to load albums
           </Typography>
-          <Typography 
-            variant="body2" 
+          <Typography
+            variant="body2"
             color="text.secondary"
-            sx={{ opacity: 0.7, maxWidth: 400 }}
+            sx={{
+              opacity: 0.7,
+              maxWidth: 400,
+              fontFamily: theme.typography.fontFamily,
+            }}
           >
             {error}
           </Typography>
@@ -267,17 +266,20 @@ const ShoppingList = () => {
             gap: 2,
           }}
         >
-          <CircularProgress 
-            size={32} 
-            sx={{ 
+          <CircularProgress
+            size={32}
+            sx={{
               color: "primary.main",
-              opacity: 0.8 
-            }} 
+              opacity: 0.8,
+            }}
           />
-          <Typography 
-            variant="body2" 
+          <Typography
+            variant="body2"
             color="text.secondary"
-            sx={{ opacity: 0.7 }}
+            sx={{
+              opacity: 0.7,
+              fontFamily: theme.typography.fontFamily,
+            }}
           >
             Loading albums...
           </Typography>
@@ -287,24 +289,27 @@ const ShoppingList = () => {
 
     if (!Array.isArray(filteredItems) || filteredItems.length === 0) {
       return (
-        <Box sx={{ textAlign: "center", py: 8 }}>
+        <Box sx={{ textAlign: "center", py: 4 }}>
+          {" "}
           <Typography
             variant="h6"
             color="text.secondary"
-            sx={{ 
+            sx={{
               fontWeight: 400,
               mb: 1,
-              opacity: 0.8 
+              opacity: 0.8,
+              fontFamily: theme.typography.fontFamily,
             }}
           >
-            {searchTerm
-              ? `No results for "${searchTerm}"`
-              : `No albums found`}
+            {searchTerm ? `No results for "${searchTerm}"` : `No albums found`}
           </Typography>
-          <Typography 
-            variant="body2" 
+          <Typography
+            variant="body2"
             color="text.secondary"
-            sx={{ opacity: 0.6 }}
+            sx={{
+              opacity: 0.6,
+              fontFamily: theme.typography.fontFamily,
+            }}
           >
             Try adjusting your search or filters
           </Typography>
@@ -334,7 +339,7 @@ const ShoppingList = () => {
                 alignItems: "stretch",
               }}
             >
-              <Item item={item} />
+              <Item item={item} showAddButton={false} />
             </Grid>
           </Fade>
         ))}
@@ -352,50 +357,56 @@ const ShoppingList = () => {
       id="shopping-list"
       sx={{ px: { xs: 2, sm: 3, md: 4 } }}
     >
-      {/* Header - Mantenido como antes */}
-      <Box sx={{ textAlign: "center", mb: 5 }}>
+      <Box sx={{ textAlign: "center", mb: 4 }}>
+        {" "}
         <Typography
           variant="h3"
           component="h1"
-          sx={{ 
-            mb: 2, 
+          sx={{
+            mb: 2,
             fontWeight: 600,
-            fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' }
+            fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+            fontFamily: theme.typography.fontFamily,
           }}
         >
           Our Featured{" "}
-          <Box 
-            component="span" 
-            sx={{ 
-              color: "primary.main", 
-              fontWeight: 700 
+          <Box
+            component="span"
+            sx={{
+              color: "primary.main",
+              fontWeight: 700,
             }}
           >
             Albums
           </Box>
         </Typography>
-        
-        <Typography 
-          variant="body1" 
+        <Typography
+          variant="body1"
           color="text.secondary"
-          sx={{ maxWidth: 600, mx: 'auto', mb: 4 }}
+          sx={{
+            maxWidth: 600,
+            mx: "auto",
+            mb: 3,
+            fontFamily: theme.typography.fontFamily,
+          }}
         >
           Discover our curated collection of vinyl records across all genres
         </Typography>
       </Box>
 
-      {/* Search Input - Enhanced */}
-      <Box sx={{ mb: 3, position: 'relative', maxWidth: 500, mx: 'auto' }}>
-        <SearchIcon 
-          sx={{ 
-            position: 'absolute',
+      <Box
+        sx={{ mb: 2, position: "relative", width: "100%", maxWidth: "none" }}
+      >
+        <SearchIcon
+          sx={{
+            position: "absolute",
             left: 16,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: 'text.secondary',
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "text.secondary",
             opacity: 0.6,
-            fontSize: 20
-          }} 
+            fontSize: 20,
+          }}
         />
         <Input
           value={searchTerm}
@@ -408,108 +419,125 @@ const ShoppingList = () => {
             borderRadius: 0,
             px: 4,
             py: 1.5,
-            transition: 'all 0.3s ease',
-            bgcolor: 'background.paper',
-            fontSize: '0.95rem',
-            '&:hover': {
-              borderColor: 'primary.main',
-              bgcolor: 'neutral.light',
+            transition: "all 0.3s ease",
+            bgcolor: "background.paper",
+            fontSize: "0.95rem",
+            fontFamily: theme.typography.fontFamily,
+            "&:hover": {
+              borderColor: "primary.main",
+              bgcolor: shades.neutral[50],
             },
-            '&.Mui-focused': {
-              borderColor: 'primary.main',
+            "&.Mui-focused": {
+              borderColor: "primary.main",
               boxShadow: `0 0 0 1px ${theme.palette.primary.main}20`,
-              bgcolor: 'background.paper',
+              bgcolor: "background.paper",
             },
-            '& .MuiInput-input': {
+            "& .MuiInput-input": {
               py: 0.5,
-              textAlign: 'left',
-              '&::placeholder': {
+              textAlign: "left",
+              fontFamily: theme.typography.fontFamily,
+              "&::placeholder": {
                 opacity: 0.6,
-                color: 'text.secondary'
-              }
-            }
+                color: "text.secondary",
+              },
+            },
           }}
           aria-label="Search albums"
         />
-        
-        {/* Mobile filter toggle */}
+
         {isMobile && (
           <IconButton
             onClick={toggleFilters}
             sx={{
-              position: 'absolute',
+              position: "absolute",
               right: 8,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'text.secondary',
-              opacity: 0.7
+              top: "50%",
+              transform: "translateY(-50%)",
+              color: "text.secondary",
+              opacity: 0.7,
             }}
           >
             <TuneIcon fontSize="small" />
           </IconButton>
         )}
       </Box>
-
-      {/* Control Bar - Enhanced */}
       <Fade in={showFilters} timeout={400}>
-        <Paper 
+        <Paper
           elevation={0}
-          sx={{ 
-            mb: 4, 
+          sx={{
+            mb: showFilters ? 3 : 0,
             p: { xs: 2, sm: 3 },
             border: `1px solid ${theme.palette.divider}`,
             borderRadius: 0,
-            bgcolor: 'background.paper',
+            bgcolor: "background.paper",
             opacity: showFilters ? 1 : 0,
-            transform: showFilters ? 'translateY(0)' : 'translateY(-10px)',
-            transition: 'all 0.3s ease'
+            transform: showFilters ? "translateY(0)" : "translateY(-10px)",
+            transition: "all 0.3s ease",
+            height: showFilters ? "auto" : 0,
+            overflow: "hidden",
+            visibility: showFilters ? "visible" : "hidden",
           }}
         >
-          {/* Genre Chips */}
           <Box sx={{ mb: 3 }}>
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                display: 'block',
+            <Typography
+              variant="caption"
+              sx={{
+                display: "block",
                 mb: 2,
                 fontWeight: 500,
                 letterSpacing: 1,
-                textTransform: 'uppercase',
-                color: 'text.secondary',
-                fontSize: '0.7rem',
-                opacity: 0.8
+                textTransform: "uppercase",
+                color: "text.secondary",
+                fontSize: "0.7rem",
+                opacity: 0.8,
+                fontFamily: theme.typography.fontFamily,
               }}
             >
               Genre
             </Typography>
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                gap: 1, 
-                flexWrap: 'wrap',
-                justifyContent: { xs: 'center', sm: 'flex-start' }
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                flexWrap: "wrap",
+                justifyContent: "flex-start",
               }}
             >
               {CATEGORIES.map((category) => (
                 <Chip
                   key={category.value}
                   label={category.label}
-                  onClick={() => handleCategoryChange(null, category.value)}
-                  variant={selectedCategory === category.value ? "filled" : "outlined"}
+                  onClick={() => handleCategoryChange(category.value)}
+                  variant={
+                    selectedCategory === category.value ? "filled" : "outlined"
+                  }
                   size={isMobile ? "small" : "medium"}
                   sx={{
                     borderRadius: 0,
                     fontWeight: 400,
-                    fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                    fontSize: { xs: "0.7rem", sm: "0.75rem" },
                     letterSpacing: 0.5,
-                    bgcolor: selectedCategory === category.value ? 'primary.main' : 'transparent',
-                    color: selectedCategory === category.value ? 'white' : 'text.primary',
-                    borderColor: selectedCategory === category.value ? 'primary.main' : 'divider',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                      bgcolor: selectedCategory === category.value ? 'primary.dark' : 'action.hover',
-                      borderColor: 'primary.main',
-                      transform: 'translateY(-1px)'
+                    fontFamily: theme.typography.fontFamily,
+                    bgcolor:
+                      selectedCategory === category.value
+                        ? "primary.main"
+                        : "transparent",
+                    color:
+                      selectedCategory === category.value
+                        ? "white"
+                        : "text.primary",
+                    borderColor:
+                      selectedCategory === category.value
+                        ? "primary.main"
+                        : "divider",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      bgcolor:
+                        selectedCategory === category.value
+                          ? "primary.dark"
+                          : shades.neutral[50],
+                      borderColor: "primary.main",
+                      transform: "translateY(-1px)",
                     },
                   }}
                 />
@@ -519,26 +547,25 @@ const ShoppingList = () => {
 
           <Divider sx={{ my: 2, opacity: 0.5 }} />
 
-          {/* Sort & Price Filter Row */}
           <Grid container spacing={3}>
-            {/* Sort */}
             <Grid item xs={12} sm={6}>
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  display: 'block',
+              <Typography
+                variant="caption"
+                sx={{
+                  display: "block",
                   mb: 2,
                   fontWeight: 500,
                   letterSpacing: 1,
-                  textTransform: 'uppercase',
-                  color: 'text.secondary',
-                  fontSize: '0.7rem',
-                  opacity: 0.8
+                  textTransform: "uppercase",
+                  color: "text.secondary",
+                  fontSize: "0.7rem",
+                  opacity: 0.8,
+                  fontFamily: theme.typography.fontFamily,
                 }}
               >
                 Sort By
               </Typography>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
                 {SORT_OPTIONS.map((option) => (
                   <Chip
                     key={option.value}
@@ -549,16 +576,24 @@ const ShoppingList = () => {
                     sx={{
                       borderRadius: 0,
                       fontWeight: 400,
-                      fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                      fontSize: { xs: "0.7rem", sm: "0.75rem" },
                       letterSpacing: 0.5,
-                      bgcolor: sortBy === option.value ? 'primary.main' : 'transparent',
-                      color: sortBy === option.value ? 'white' : 'text.primary',
-                      borderColor: sortBy === option.value ? 'primary.main' : 'divider',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        bgcolor: sortBy === option.value ? 'primary.dark' : 'action.hover',
-                        borderColor: 'primary.main',
-                        transform: 'translateY(-1px)'
+                      fontFamily: theme.typography.fontFamily,
+                      bgcolor:
+                        sortBy === option.value
+                          ? "primary.main"
+                          : "transparent",
+                      color: sortBy === option.value ? "white" : "text.primary",
+                      borderColor:
+                        sortBy === option.value ? "primary.main" : "divider",
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        bgcolor:
+                          sortBy === option.value
+                            ? "primary.dark"
+                            : shades.neutral[50],
+                        borderColor: "primary.main",
+                        transform: "translateY(-1px)",
                       },
                     }}
                   />
@@ -566,41 +601,49 @@ const ShoppingList = () => {
               </Box>
             </Grid>
 
-            {/* Price Filter */}
             <Grid item xs={12} sm={6}>
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  display: 'block',
+              <Typography
+                variant="caption"
+                sx={{
+                  display: "block",
                   mb: 1.5,
                   fontWeight: 500,
                   letterSpacing: 1,
-                  textTransform: 'uppercase',
-                  color: 'text.secondary',
-                  fontSize: '0.7rem',
-                  opacity: 0.8
+                  textTransform: "uppercase",
+                  color: "text.secondary",
+                  fontSize: "0.7rem",
+                  opacity: 0.8,
+                  fontFamily: theme.typography.fontFamily,
                 }}
               >
                 Price Range
               </Typography>
               <Box sx={{ px: 1 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1.5 }}>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      fontSize: '0.8rem', 
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 1.5,
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: "0.8rem",
                       fontWeight: 500,
-                      opacity: 0.8
+                      opacity: 0.8,
+                      fontFamily: theme.typography.fontFamily,
                     }}
                   >
                     €{priceRange[0]}
                   </Typography>
-                  <Typography 
-                    variant="body2" 
-                    sx={{ 
-                      fontSize: '0.8rem', 
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: "0.8rem",
                       fontWeight: 500,
-                      opacity: 0.8
+                      opacity: 0.8,
+                      fontFamily: theme.typography.fontFamily,
                     }}
                   >
                     €{priceRange[1]}
@@ -613,29 +656,31 @@ const ShoppingList = () => {
                   min={0}
                   max={maxPrice}
                   sx={{
-                    color: 'primary.main',
+                    color: "primary.main",
                     height: 2,
-                    '& .MuiSlider-thumb': {
+                    "& .MuiSlider-thumb": {
                       width: 12,
                       height: 12,
                       borderRadius: 0,
-                      transition: 'all 0.2s ease',
-                      '&:hover, &.Mui-focusVisible': {
+                      transition: "all 0.2s ease",
+                      "&:hover, &.Mui-focusVisible": {
                         boxShadow: `0 0 0 8px ${theme.palette.primary.main}20`,
                       },
                     },
-                    '& .MuiSlider-track': {
+                    "& .MuiSlider-track": {
                       height: 2,
                     },
-                    '& .MuiSlider-rail': {
+                    "& .MuiSlider-rail": {
                       height: 2,
                       opacity: 0.3,
+                      backgroundColor: shades.neutral[300],
                     },
-                    '& .MuiSlider-valueLabel': {
-                      backgroundColor: 'primary.main',
+                    "& .MuiSlider-valueLabel": {
+                      backgroundColor: "primary.main",
                       borderRadius: 0,
-                      fontSize: '0.7rem'
-                    }
+                      fontSize: "0.7rem",
+                      fontFamily: theme.typography.fontFamily,
+                    },
                   }}
                 />
               </Box>
@@ -644,23 +689,43 @@ const ShoppingList = () => {
         </Paper>
       </Fade>
 
-      {/* Content */}
-      {renderContent()}
+      <Box
+        sx={{
+          mt: isMobile && !showFilters ? 2 : 0,
+        }}
+      >
+        {renderContent()}
+      </Box>
 
-      {/* Results Counter - Enhanced */}
       {!isLoading && !error && (
         <Fade in timeout={500}>
-          <Box sx={{ textAlign: 'center', mt: 6, mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-              <Box sx={{ width: { xs: 20, sm: 40 }, height: 1, bgcolor: 'divider', opacity: 0.5 }} />
+          <Box sx={{ textAlign: "center", mt: 4, mb: 2 }}>
+            {" "}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  width: { xs: 20, sm: 40 },
+                  height: 1,
+                  bgcolor: "divider",
+                  opacity: 0.5,
+                }}
+              />
               <Typography
                 variant="body2"
                 color="text.secondary"
-                sx={{ 
+                sx={{
                   fontWeight: 400,
                   letterSpacing: 0.5,
                   opacity: 0.7,
-                  fontSize: { xs: '0.8rem', sm: '0.9rem' }
+                  fontSize: { xs: "0.8rem", sm: "0.9rem" },
+                  fontFamily: theme.typography.fontFamily,
                 }}
               >
                 {resultCount > 0 ? (
@@ -671,7 +736,14 @@ const ShoppingList = () => {
                   "No albums match your criteria"
                 )}
               </Typography>
-              <Box sx={{ width: { xs: 20, sm: 40 }, height: 1, bgcolor: 'divider', opacity: 0.5 }} />
+              <Box
+                sx={{
+                  width: { xs: 20, sm: 40 },
+                  height: 1,
+                  bgcolor: "divider",
+                  opacity: 0.5,
+                }}
+              />
             </Box>
           </Box>
         </Fade>
