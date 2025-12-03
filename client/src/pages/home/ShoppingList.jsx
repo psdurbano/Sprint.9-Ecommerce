@@ -20,9 +20,10 @@ import { setItems } from "../../state";
 import { API_ENDPOINTS } from "../../utils/apiConfig";
 import SearchIcon from "@mui/icons-material/Search";
 import TuneIcon from "@mui/icons-material/Tune";
-
 import { shades } from "../../theme";
+import LoadingExperience from "../../utils/LoadingExperience";
 
+// Available categories and sort options
 const CATEGORIES = [
   { label: "ALL", value: "all" },
   { label: "JAZZ", value: "jazz" },
@@ -33,17 +34,80 @@ const CATEGORIES = [
 
 const SORT_OPTIONS = [
   { label: "Featured", value: "featured" },
-  { label: "A → Z", value: "name-asc" },
-  { label: "Z → A", value: "name-desc" },
-  { label: "Price ↑", value: "price-asc" },
-  { label: "Price ↓", value: "price-desc" },
+  { label: "A to Z", value: "name-asc" },
+  { label: "Z to A", value: "name-desc" },
+  { label: "Price Low to High", value: "price-asc" },
+  { label: "Price High to Low", value: "price-desc" },
 ];
+
+// Infinite scroll configuration
+const ITEMS_PER_PAGE = 24;
 
 const ShoppingList = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
+  const filterLabelStyles = useMemo(
+    () => ({
+      display: "block",
+      mb: 2,
+      fontWeight: 500,
+      letterSpacing: 1,
+      textTransform: "uppercase",
+      color: "text.secondary",
+      fontSize: "0.7rem",
+      opacity: 0.8,
+      fontFamily: theme.typography.fontFamily,
+    }),
+    [theme]
+  );
+
+  const chipBaseStyles = useMemo(
+    () => ({
+      borderRadius: 0,
+      fontWeight: 400,
+      fontSize: { xs: "0.7rem", sm: "0.75rem" },
+      letterSpacing: 0.5,
+      fontFamily: theme.typography.fontFamily,
+      transition: "all 0.2s ease",
+    }),
+    [theme]
+  );
+
+  const getChipStyles = useCallback(
+    (isSelected) => ({
+      ...chipBaseStyles,
+      bgcolor: isSelected ? "primary.main" : "transparent",
+      color: isSelected ? "white" : "text.primary",
+      borderColor: isSelected ? "primary.main" : "divider",
+      "&:hover": {
+        bgcolor: isSelected ? "primary.dark" : shades.neutral[50],
+        borderColor: "primary.main",
+        transform: "translateY(-1px)",
+      },
+    }),
+    [chipBaseStyles]
+  );
+
+  const renderDivider = useCallback(
+    () => <Divider sx={{ my: 2, opacity: 0.5 }} />,
+    []
+  );
+
+  const renderFilterLabel = useCallback(
+    (text) => (
+      <Typography variant="caption" sx={filterLabelStyles}>
+        {text}
+      </Typography>
+    ),
+    [filterLabelStyles]
+  );
+
+  // Items from Redux store
+  const items = useSelector((state) => state.cart.items || []);
+
+  // Filter & UI states
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -53,35 +117,45 @@ const ShoppingList = () => {
   const [maxPrice, setMaxPrice] = useState(100);
   const [resultCount, setResultCount] = useState(0);
   const [showFilters, setShowFilters] = useState(!isMobile);
+  const [showLoadingExperience, setShowLoadingExperience] = useState(false);
 
-  const items = useSelector((state) => state.cart.items || []);
+  // Infinite scroll states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreItems, setHasMoreItems] = useState(false);
 
+  // Handlers
   const handleCategoryChange = useCallback((categoryValue) => {
     setSelectedCategory(categoryValue);
+    setCurrentPage(1); // Reset to page 1 when category changes
   }, []);
 
   const handleSearchChange = useCallback((event) => {
     setSearchTerm(event.target.value);
+    setCurrentPage(1); // Reset to page 1 when search changes
   }, []);
 
   const handleCategoryEvent = useCallback((e) => {
     if (e?.detail?.category) {
       setSelectedCategory(e.detail.category);
+      setCurrentPage(1);
     }
   }, []);
 
   const handleSortSelect = useCallback((value) => {
     setSortBy(value);
+    setCurrentPage(1); // Reset to page 1 when sort changes
   }, []);
 
   const handlePriceChange = useCallback((event, newValue) => {
     setPriceRange(newValue);
+    setCurrentPage(1); // Reset to page 1 when price changes
   }, []);
 
   const toggleFilters = useCallback(() => {
     setShowFilters((prev) => !prev);
   }, []);
 
+  // Calculate max price when items are loaded
   useEffect(() => {
     if (Array.isArray(items) && items.length > 0) {
       const prices = items.map((item) => item?.attributes?.price || 0);
@@ -91,6 +165,7 @@ const ShoppingList = () => {
     }
   }, [items]);
 
+  // Hide filters on scroll (mobile only)
   useEffect(() => {
     if (!isMobile) {
       setShowFilters(true);
@@ -109,6 +184,7 @@ const ShoppingList = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isMobile]);
 
+  // Filtered and sorted items
   const filteredItems = useMemo(() => {
     if (!Array.isArray(items)) return [];
 
@@ -131,6 +207,7 @@ const ShoppingList = () => {
       return matchesCategory && matchesSearch && matchesPrice;
     });
 
+    // Apply sorting (except for "featured")
     if (sortBy !== "featured") {
       filtered = [...filtered].sort((a, b) => {
         const aName = a?.attributes?.name || "";
@@ -156,10 +233,64 @@ const ShoppingList = () => {
     return filtered;
   }, [items, selectedCategory, searchTerm, sortBy, priceRange]);
 
+  // Calculate visible items for infinite scroll
+  const visibleItems = useMemo(() => {
+    const startIndex = 0;
+    const endIndex = currentPage * ITEMS_PER_PAGE;
+    return filteredItems.slice(startIndex, endIndex);
+  }, [filteredItems, currentPage]);
+
+  // Update result count and hasMoreItems
   useEffect(() => {
     setResultCount(filteredItems.length);
-  }, [filteredItems]);
+    setHasMoreItems(visibleItems.length < filteredItems.length);
+  }, [filteredItems, visibleItems]);
 
+  // Infinite scroll handler
+  const handleScroll = useCallback(() => {
+    if (!hasMoreItems) return;
+
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+
+    // Load more when near bottom
+    if (scrollTop + windowHeight >= documentHeight - 100) {
+      setCurrentPage(prev => prev + 1);
+    }
+  }, [hasMoreItems]);
+
+  // Setup scroll listener for infinite scroll
+  useEffect(() => {
+    if (hasMoreItems) {
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      window.addEventListener('resize', handleScroll, { passive: true });
+    }
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
+  }, [handleScroll, hasMoreItems]);
+
+  // Load more items if page is too short on initial load
+  useEffect(() => {
+    if (hasMoreItems && visibleItems.length > 0) {
+      const checkInitialLoad = () => {
+        const windowHeight = window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
+        
+        // Load more if page doesn't have scroll
+        if (documentHeight <= windowHeight + 100) {
+          setCurrentPage(prev => prev + 1);
+        }
+      };
+
+      setTimeout(checkInitialLoad, 100);
+    }
+  }, [hasMoreItems, visibleItems.length]);
+
+  // Listen to external category change events
   useEffect(() => {
     window.addEventListener("categoryChange", handleCategoryEvent);
     return () => {
@@ -167,103 +298,123 @@ const ShoppingList = () => {
     };
   }, [handleCategoryEvent]);
 
+  // Fetch items from API
   useEffect(() => {
+    // Si ya hay items, no hacer fetch
+    if (items.length > 0) {
+      setIsLoading(false);
+      return;
+    }
+  
     let isMounted = true;
-
+    let loadingTimer = null;
+    let hideLoadingTimer = null;
+  
     const fetchItems = async () => {
       if (!isMounted) return;
-
+  
       setIsLoading(true);
       setError(null);
-
+      setShowLoadingExperience(false);
+  
+      // Show extended loading experience after 5 seconds
+      loadingTimer = setTimeout(() => {
+        if (isMounted) {
+          setShowLoadingExperience(true);
+        }
+      }, 5000);
+  
       try {
+        // AÑADIR timeout para la petición fetch individual
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout por petición
+        
         const response = await fetch(
-          `${API_ENDPOINTS.items}?populate=image&pagination[pageSize]=150&sort=name:asc`
+          `${API_ENDPOINTS.items}?populate=image&pagination[pageSize]=250&sort=name:asc`,
+          { signal: controller.signal }
         );
-
+  
+        clearTimeout(timeoutId);
+  
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-
+  
         const data = await response.json();
-
+  
         if (!isMounted) return;
-
+  
+        clearTimeout(loadingTimer);
+        clearTimeout(hideLoadingTimer);
+  
         if (data?.data && Array.isArray(data.data)) {
           dispatch(setItems(data.data));
         } else {
           dispatch(setItems([]));
-          console.warn("Unexpected API response structure:", data);
         }
+  
+        setIsLoading(false);
+        setShowLoadingExperience(false);
       } catch (err) {
         if (!isMounted) return;
+  
         console.error("Error fetching items:", err);
-        setError(err.message);
-        dispatch(setItems([]));
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
+        
+        // Manejar específicamente abort vs network error
+        if (err.name === 'AbortError') {
+          // Timeout de la petición (30s) - NO hacer nada, dejar que el LoadingExperience siga
+        } else {
+          // Error de red - NO establecer error aquí, dejar que el timeout de 4 minutos lo maneje
         }
       }
     };
-
+  
+    // Force timeout after 4 minutes (240 segundos)
+    hideLoadingTimer = setTimeout(() => {
+      if (isMounted) {
+        clearTimeout(loadingTimer);
+        setIsLoading(false);
+        setShowLoadingExperience(false);
+        // Solo establecer error si no hay items cargados
+        if (items.length === 0) {
+          setError("Server took too long to respond. Please try again later.");
+        }
+      }
+    }, 240000);
+  
     fetchItems();
-
+  
     return () => {
       isMounted = false;
+      if (loadingTimer) clearTimeout(loadingTimer);
+      if (hideLoadingTimer) clearTimeout(hideLoadingTimer);
     };
-  }, [dispatch]);
+  }, [dispatch, items.length]);
 
-  const renderContent = () => {
-    if (error) {
+  // Render loading, error, empty or grid
+  const renderLoadingState = useCallback(() => {
+    if (!isLoading) return null;
+
+    // Si showLoadingExperience es true, mostrar SOLO el LoadingExperience
+    if (showLoadingExperience) {
       return (
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            height: 200,
-            textAlign: "center",
-            px: 2,
-          }}
-        >
-          <Typography
-            variant="h6"
-            color="text.secondary"
-            gutterBottom
-            sx={{
-              fontWeight: 400,
-              fontFamily: theme.typography.fontFamily,
-            }}
-          >
-            Failed to load albums
-          </Typography>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              opacity: 0.7,
-              maxWidth: 400,
-              fontFamily: theme.typography.fontFamily,
-            }}
-          >
-            {error}
-          </Typography>
+        <Box sx={{ py: 4 }}>
+          <LoadingExperience show={showLoadingExperience} />
         </Box>
       );
     }
 
-    if (isLoading) {
-      return (
+    // Si aún no han pasado 5 segundos, mostrar spinner normal
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
         <Box
           sx={{
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
             alignItems: "center",
-            height: 300,
-            gap: 2,
+            height: 80,
+            gap: 1,
           }}
         >
           <CircularProgress
@@ -284,67 +435,147 @@ const ShoppingList = () => {
             Loading albums...
           </Typography>
         </Box>
-      );
-    }
+      </Box>
+    );
+  }, [isLoading, showLoadingExperience, theme.typography.fontFamily]);
 
-    if (!Array.isArray(filteredItems) || filteredItems.length === 0) {
-      return (
-        <Box sx={{ textAlign: "center", py: 4 }}>
-          {" "}
-          <Typography
-            variant="h6"
-            color="text.secondary"
-            sx={{
-              fontWeight: 400,
-              mb: 1,
-              opacity: 0.8,
-              fontFamily: theme.typography.fontFamily,
-            }}
-          >
-            {searchTerm ? `No results for "${searchTerm}"` : `No albums found`}
-          </Typography>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              opacity: 0.6,
-              fontFamily: theme.typography.fontFamily,
-            }}
-          >
-            Try adjusting your search or filters
-          </Typography>
-        </Box>
-      );
+  const renderErrorState = useCallback(() => {
+    // No mostrar error si estamos mostrando LoadingExperience
+    if (showLoadingExperience || !error) return null;
+
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          height: 200,
+          textAlign: "center",
+          px: 2,
+        }}
+      >
+        <Typography
+          variant="h6"
+          color="text.secondary"
+          gutterBottom
+          sx={{
+            fontWeight: 400,
+            fontFamily: theme.typography.fontFamily,
+          }}
+        >
+          Failed to load albums
+        </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            opacity: 0.7,
+            maxWidth: 400,
+            fontFamily: theme.typography.fontFamily,
+          }}
+        >
+          {error}
+        </Typography>
+      </Box>
+    );
+  }, [error, showLoadingExperience, theme.typography.fontFamily]);
+
+  const renderEmptyState = useCallback(() => {
+    // No mostrar empty state si estamos cargando o hay error
+    if (isLoading || error || showLoadingExperience || visibleItems.length > 0) {
+      return null;
     }
 
     return (
-      <Grid
-        container
-        spacing={isMobile ? 2 : 3}
-        justifyContent="center"
-        alignItems="stretch"
-        sx={{ py: 1 }}
-      >
-        {filteredItems.map((item, index) => (
-          <Fade in timeout={300 + index * 50} key={`item-${item.id}`}>
-            <Grid
-              item
-              xs={12}
-              sm={6}
-              md={4}
-              lg={3}
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "stretch",
-              }}
-            >
-              <Item item={item} showAddButton={false} />
-            </Grid>
-          </Fade>
-        ))}
-      </Grid>
+      <Box sx={{ textAlign: "center", py: 4 }}>
+        <Typography
+          variant="h6"
+          color="text.secondary"
+          sx={{
+            fontWeight: 400,
+            mb: 1,
+            opacity: 0.8,
+            fontFamily: theme.typography.fontFamily,
+          }}
+        >
+          {searchTerm ? `No results for "${searchTerm}"` : `No albums found`}
+        </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            opacity: 0.6,
+            fontFamily: theme.typography.fontFamily,
+          }}
+        >
+          Try adjusting your search or filters
+        </Typography>
+      </Box>
     );
+  }, [visibleItems, searchTerm, isLoading, error, showLoadingExperience, theme.typography.fontFamily]);
+
+  const renderItemsGrid = useCallback(() => {
+    // No mostrar items si estamos cargando, hay error o mostrando LoadingExperience
+    if (isLoading || error || showLoadingExperience || !visibleItems.length) return null;
+
+    return (
+      <>
+        <Grid
+          container
+          spacing={isMobile ? 2 : 3}
+          justifyContent="center"
+          alignItems="stretch"
+          sx={{ py: 1 }}
+        >
+          {visibleItems.map((item, index) => (
+            <Fade in timeout={300 + index * 50} key={`item-${item.id}`}>
+              <Grid
+                item
+                xs={12}
+                sm={6}
+                md={4}
+                lg={3}
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "stretch",
+                }}
+              >
+                <Item item={item} showAddButton={false} />
+              </Grid>
+            </Fade>
+          ))}
+        </Grid>
+
+        {/* Loading indicator when there are more items */}
+        {hasMoreItems && (
+          <Box sx={{ textAlign: 'center', py: 4 }}>
+            <CircularProgress size={24} sx={{ color: 'primary.main' }} />
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Scroll down to load more albums...
+            </Typography>
+          </Box>
+        )}
+      </>
+    );
+  }, [visibleItems, isMobile, hasMoreItems, isLoading, error, showLoadingExperience]);
+
+  const renderContent = () => {
+    // Prioridad: LoadingExperience > Error > Loading spinner > Empty > Items
+    if (showLoadingExperience) {
+      return renderLoadingState();
+    }
+    if (error) {
+      return renderErrorState();
+    }
+    if (isLoading) {
+      return renderLoadingState();
+    }
+    if (visibleItems.length === 0) {
+      return renderEmptyState();
+    }
+    return renderItemsGrid();
   };
 
   return (
@@ -357,338 +588,257 @@ const ShoppingList = () => {
       id="shopping-list"
       sx={{ px: { xs: 2, sm: 3, md: 4 } }}
     >
-      <Box sx={{ textAlign: "center", mb: 4 }}>
-        {" "}
-        <Typography
-          variant="h3"
-          component="h1"
-          sx={{
-            mb: 2,
-            fontWeight: 600,
-            fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
-            fontFamily: theme.typography.fontFamily,
-          }}
-        >
-          Our Featured{" "}
-          <Box
-            component="span"
+      {/* Page title - ocultar cuando se muestra LoadingExperience */}
+      {!showLoadingExperience && (
+        <Box sx={{ textAlign: "center", mb: 4 }}>
+          <Typography
+            variant="h3"
+            component="h1"
             sx={{
-              color: "primary.main",
-              fontWeight: 700,
+              mb: 2,
+              fontWeight: 600,
+              fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+              fontFamily: theme.typography.fontFamily,
             }}
           >
-            Albums
-          </Box>
-        </Typography>
-        <Typography
-          variant="body1"
-          color="text.secondary"
-          sx={{
-            maxWidth: 600,
-            mx: "auto",
-            mb: 3,
-            fontFamily: theme.typography.fontFamily,
-          }}
-        >
-          Discover our curated collection of vinyl records across all genres
-        </Typography>
-      </Box>
-
-      <Box
-        sx={{ mb: 2, position: "relative", width: "100%", maxWidth: "none" }}
-      >
-        <SearchIcon
-          sx={{
-            position: "absolute",
-            left: 16,
-            top: "50%",
-            transform: "translateY(-50%)",
-            color: "text.secondary",
-            opacity: 0.6,
-            fontSize: 20,
-          }}
-        />
-        <Input
-          value={searchTerm}
-          onChange={handleSearchChange}
-          placeholder="Search albums by name..."
-          fullWidth
-          disableUnderline
-          sx={{
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 0,
-            px: 4,
-            py: 1.5,
-            transition: "all 0.3s ease",
-            bgcolor: "background.paper",
-            fontSize: "0.95rem",
-            fontFamily: theme.typography.fontFamily,
-            "&:hover": {
-              borderColor: "primary.main",
-              bgcolor: shades.neutral[50],
-            },
-            "&.Mui-focused": {
-              borderColor: "primary.main",
-              boxShadow: `0 0 0 1px ${theme.palette.primary.main}20`,
-              bgcolor: "background.paper",
-            },
-            "& .MuiInput-input": {
-              py: 0.5,
-              textAlign: "left",
+            Our Featured{" "}
+            <Box
+              component="span"
+              sx={{
+                color: "primary.main",
+                fontWeight: 700,
+              }}
+            >
+              Albums
+            </Box>
+          </Typography>
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{
+              maxWidth: 600,
+              mx: "auto",
+              mb: 3,
               fontFamily: theme.typography.fontFamily,
-              "&::placeholder": {
-                opacity: 0.6,
-                color: "text.secondary",
-              },
-            },
-          }}
-          aria-label="Search albums"
-        />
+            }}
+          >
+            Discover our curated collection of vinyl records across all genres
+          </Typography>
+        </Box>
+      )}
 
-        {isMobile && (
-          <IconButton
-            onClick={toggleFilters}
+      {/* Search input - ocultar cuando se muestra LoadingExperience */}
+      {!showLoadingExperience && (
+        <Box
+          sx={{ mb: 2, position: "relative", width: "100%", maxWidth: "none" }}
+        >
+          <SearchIcon
             sx={{
               position: "absolute",
-              right: 8,
+              left: 16,
               top: "50%",
               transform: "translateY(-50%)",
               color: "text.secondary",
-              opacity: 0.7,
+              opacity: 0.6,
+              fontSize: 20,
+            }}
+          />
+          <Input
+            value={searchTerm}
+            onChange={handleSearchChange}
+            placeholder="Search albums by name..."
+            fullWidth
+            disableUnderline
+            sx={{
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: 0,
+              px: 4,
+              py: 1.5,
+              transition: "all 0.3s ease",
+              bgcolor: "background.paper",
+              fontSize: "0.95rem",
+              fontFamily: theme.typography.fontFamily,
+              "&:hover": {
+                borderColor: "primary.main",
+                bgcolor: shades.neutral[50],
+              },
+              "&.Mui-focused": {
+                borderColor: "primary.main",
+                boxShadow: `0 0 0 1px ${theme.palette.primary.main}20`,
+                bgcolor: "background.paper",
+              },
+              "& .MuiInput-input": {
+                py: 0.5,
+                textAlign: "left",
+                fontFamily: theme.typography.fontFamily,
+                "&::placeholder": {
+                  opacity: 0.6,
+                  color: "text.secondary",
+                },
+              },
+            }}
+            aria-label="Search albums"
+          />
+
+          {/* Mobile filter toggle */}
+          {isMobile && (
+            <IconButton
+              onClick={toggleFilters}
+              sx={{
+                position: "absolute",
+                right: 8,
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "text.secondary",
+                opacity: 0.7,
+              }}
+            >
+              <TuneIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
+      )}
+
+      {/* Filters panel - ocultar cuando se muestra LoadingExperience */}
+      {!showLoadingExperience && (
+        <Fade in={showFilters} timeout={400}>
+          <Paper
+            elevation={0}
+            sx={{
+              mb: showFilters ? 3 : 0,
+              p: { xs: 2, sm: 3 },
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: 0,
+              bgcolor: "background.paper",
+              opacity: showFilters ? 1 : 0,
+              transform: showFilters ? "translateY(0)" : "translateY(-10px)",
+              transition: "all 0.3s ease",
+              height: showFilters ? "auto" : 0,
+              overflow: "hidden",
+              visibility: showFilters ? "visible" : "hidden",
             }}
           >
-            <TuneIcon fontSize="small" />
-          </IconButton>
-        )}
-      </Box>
-      <Fade in={showFilters} timeout={400}>
-        <Paper
-          elevation={0}
-          sx={{
-            mb: showFilters ? 3 : 0,
-            p: { xs: 2, sm: 3 },
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 0,
-            bgcolor: "background.paper",
-            opacity: showFilters ? 1 : 0,
-            transform: showFilters ? "translateY(0)" : "translateY(-10px)",
-            transition: "all 0.3s ease",
-            height: showFilters ? "auto" : 0,
-            overflow: "hidden",
-            visibility: showFilters ? "visible" : "hidden",
-          }}
-        >
-          <Box sx={{ mb: 3 }}>
-            <Typography
-              variant="caption"
-              sx={{
-                display: "block",
-                mb: 2,
-                fontWeight: 500,
-                letterSpacing: 1,
-                textTransform: "uppercase",
-                color: "text.secondary",
-                fontSize: "0.7rem",
-                opacity: 0.8,
-                fontFamily: theme.typography.fontFamily,
-              }}
-            >
-              Genre
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                gap: 1,
-                flexWrap: "wrap",
-                justifyContent: "flex-start",
-              }}
-            >
-              {CATEGORIES.map((category) => (
-                <Chip
-                  key={category.value}
-                  label={category.label}
-                  onClick={() => handleCategoryChange(category.value)}
-                  variant={
-                    selectedCategory === category.value ? "filled" : "outlined"
-                  }
-                  size={isMobile ? "small" : "medium"}
-                  sx={{
-                    borderRadius: 0,
-                    fontWeight: 400,
-                    fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                    letterSpacing: 0.5,
-                    fontFamily: theme.typography.fontFamily,
-                    bgcolor:
-                      selectedCategory === category.value
-                        ? "primary.main"
-                        : "transparent",
-                    color:
-                      selectedCategory === category.value
-                        ? "white"
-                        : "text.primary",
-                    borderColor:
-                      selectedCategory === category.value
-                        ? "primary.main"
-                        : "divider",
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                      bgcolor:
-                        selectedCategory === category.value
-                          ? "primary.dark"
-                          : shades.neutral[50],
-                      borderColor: "primary.main",
-                      transform: "translateY(-1px)",
-                    },
-                  }}
-                />
-              ))}
-            </Box>
-          </Box>
-
-          <Divider sx={{ my: 2, opacity: 0.5 }} />
-
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
-              <Typography
-                variant="caption"
+            {/* Genre filter */}
+            <Box sx={{ mb: 3 }}>
+              {renderFilterLabel("Genre")}
+              <Box
                 sx={{
-                  display: "block",
-                  mb: 2,
-                  fontWeight: 500,
-                  letterSpacing: 1,
-                  textTransform: "uppercase",
-                  color: "text.secondary",
-                  fontSize: "0.7rem",
-                  opacity: 0.8,
-                  fontFamily: theme.typography.fontFamily,
+                  display: "flex",
+                  gap: 1,
+                  flexWrap: "wrap",
+                  justifyContent: "flex-start",
                 }}
               >
-                Sort By
-              </Typography>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                {SORT_OPTIONS.map((option) => (
+                {CATEGORIES.map((category) => (
                   <Chip
-                    key={option.value}
-                    label={option.label}
-                    onClick={() => handleSortSelect(option.value)}
-                    variant={sortBy === option.value ? "filled" : "outlined"}
+                    key={category.value}
+                    label={category.label}
+                    onClick={() => handleCategoryChange(category.value)}
+                    variant={
+                      selectedCategory === category.value ? "filled" : "outlined"
+                    }
                     size={isMobile ? "small" : "medium"}
-                    sx={{
-                      borderRadius: 0,
-                      fontWeight: 400,
-                      fontSize: { xs: "0.7rem", sm: "0.75rem" },
-                      letterSpacing: 0.5,
-                      fontFamily: theme.typography.fontFamily,
-                      bgcolor:
-                        sortBy === option.value
-                          ? "primary.main"
-                          : "transparent",
-                      color: sortBy === option.value ? "white" : "text.primary",
-                      borderColor:
-                        sortBy === option.value ? "primary.main" : "divider",
-                      transition: "all 0.2s ease",
-                      "&:hover": {
-                        bgcolor:
-                          sortBy === option.value
-                            ? "primary.dark"
-                            : shades.neutral[50],
-                        borderColor: "primary.main",
-                        transform: "translateY(-1px)",
-                      },
-                    }}
+                    sx={getChipStyles(selectedCategory === category.value)}
                   />
                 ))}
               </Box>
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6}>
-              <Typography
-                variant="caption"
-                sx={{
-                  display: "block",
-                  mb: 1.5,
-                  fontWeight: 500,
-                  letterSpacing: 1,
-                  textTransform: "uppercase",
-                  color: "text.secondary",
-                  fontSize: "0.7rem",
-                  opacity: 0.8,
-                  fontFamily: theme.typography.fontFamily,
-                }}
-              >
-                Price Range
-              </Typography>
-              <Box sx={{ px: 1 }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 1.5,
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontSize: "0.8rem",
-                      fontWeight: 500,
-                      opacity: 0.8,
-                      fontFamily: theme.typography.fontFamily,
-                    }}
-                  >
-                    €{priceRange[0]}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontSize: "0.8rem",
-                      fontWeight: 500,
-                      opacity: 0.8,
-                      fontFamily: theme.typography.fontFamily,
-                    }}
-                  >
-                    €{priceRange[1]}
-                  </Typography>
+            {renderDivider()}
+
+            {/* Sort & Price filters */}
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                {renderFilterLabel("Sort By")}
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                  {SORT_OPTIONS.map((option) => (
+                    <Chip
+                      key={option.value}
+                      label={option.label}
+                      onClick={() => handleSortSelect(option.value)}
+                      variant={sortBy === option.value ? "filled" : "outlined"}
+                      size={isMobile ? "small" : "medium"}
+                      sx={getChipStyles(sortBy === option.value)}
+                    />
+                  ))}
                 </Box>
-                <Slider
-                  value={priceRange}
-                  onChange={handlePriceChange}
-                  valueLabelDisplay="auto"
-                  min={0}
-                  max={maxPrice}
-                  sx={{
-                    color: "primary.main",
-                    height: 2,
-                    "& .MuiSlider-thumb": {
-                      width: 12,
-                      height: 12,
-                      borderRadius: 0,
-                      transition: "all 0.2s ease",
-                      "&:hover, &.Mui-focusVisible": {
-                        boxShadow: `0 0 0 8px ${theme.palette.primary.main}20`,
-                      },
-                    },
-                    "& .MuiSlider-track": {
-                      height: 2,
-                    },
-                    "& .MuiSlider-rail": {
-                      height: 2,
-                      opacity: 0.3,
-                      backgroundColor: shades.neutral[300],
-                    },
-                    "& .MuiSlider-valueLabel": {
-                      backgroundColor: "primary.main",
-                      borderRadius: 0,
-                      fontSize: "0.7rem",
-                      fontFamily: theme.typography.fontFamily,
-                    },
-                  }}
-                />
-              </Box>
-            </Grid>
-          </Grid>
-        </Paper>
-      </Fade>
+              </Grid>
 
+              <Grid item xs={12} sm={6}>
+                {renderFilterLabel("Price Range")}
+                <Box sx={{ px: 1 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      mb: 1.5,
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: "0.8rem",
+                        fontWeight: 500,
+                        opacity: 0.8,
+                        fontFamily: theme.typography.fontFamily,
+                      }}
+                    >
+                      €{priceRange[0]}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontSize: "0.8rem",
+                        fontWeight: 500,
+                        opacity: 0.8,
+                        fontFamily: theme.typography.fontFamily,
+                      }}
+                    >
+                      €{priceRange[1]}
+                    </Typography>
+                  </Box>
+                  <Slider
+                    value={priceRange}
+                    onChange={handlePriceChange}
+                    valueLabelDisplay="auto"
+                    min={0}
+                    max={maxPrice}
+                    sx={{
+                      color: "primary.main",
+                      height: 2,
+                      "& .MuiSlider-thumb": {
+                        width: 12,
+                        height: 12,
+                        borderRadius: 0,
+                        transition: "all 0.2s ease",
+                        "&:hover, &.Mui-focusVisible": {
+                          boxShadow: `0 0 0 8px ${theme.palette.primary.main}20`,
+                        },
+                      },
+                      "& .MuiSlider-track": {
+                        height: 2,
+                      },
+                      "& .MuiSlider-rail": {
+                        height: 2,
+                        opacity: 0.3,
+                        backgroundColor: shades.neutral[300],
+                      },
+                      "& .MuiSlider-valueLabel": {
+                        backgroundColor: "primary.main",
+                        borderRadius: 0,
+                        fontSize: "0.7rem",
+                        fontFamily: theme.typography.fontFamily,
+                      },
+                    }}
+                  />
+                </Box>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Fade>
+      )}
+
+      {/* Items grid or states */}
       <Box
         sx={{
           mt: isMobile && !showFilters ? 2 : 0,
@@ -697,10 +847,10 @@ const ShoppingList = () => {
         {renderContent()}
       </Box>
 
-      {!isLoading && !error && (
+      {/* Result count footer - ocultar cuando se muestra LoadingExperience */}
+      {!showLoadingExperience && !isLoading && !error && (
         <Fade in timeout={500}>
           <Box sx={{ textAlign: "center", mt: 4, mb: 2 }}>
-            {" "}
             <Box
               sx={{
                 display: "flex",
@@ -713,7 +863,7 @@ const ShoppingList = () => {
                 sx={{
                   width: { xs: 20, sm: 40 },
                   height: 1,
-                  bgcolor: "divider",
+                  backgroundColor: "divider",
                   opacity: 0.5,
                 }}
               />
@@ -728,19 +878,14 @@ const ShoppingList = () => {
                   fontFamily: theme.typography.fontFamily,
                 }}
               >
-                {resultCount > 0 ? (
-                  <>
-                    {resultCount} {resultCount === 1 ? "album" : "albums"} found
-                  </>
-                ) : (
-                  "No albums match your criteria"
-                )}
+                Showing {visibleItems.length} of {resultCount} {resultCount === 1 ? "album" : "albums"}
+                {hasMoreItems && " • Scroll to load more"}
               </Typography>
               <Box
                 sx={{
                   width: { xs: 20, sm: 40 },
                   height: 1,
-                  bgcolor: "divider",
+                  backgroundColor: "divider",
                   opacity: 0.5,
                 }}
               />
