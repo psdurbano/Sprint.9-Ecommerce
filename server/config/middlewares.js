@@ -32,19 +32,19 @@ module.exports = [
       },
     },
   },
-  {
-    name: "strapi::cors",
-    config: {
-      enabled: true,
-      headers: "*",
-      origin: [
-        "http://localhost:3000",
-        "http://localhost:1337",
-        "https://ecommerce-allmyrecords.vercel.app",
-        "https://sprint-9-ecommerce.onrender.com",
-      ],
-    },
+{
+  name: "strapi::cors",
+  config: {
+    headers: "*",
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:1337",
+      "https://ecommerce-allmyrecords.vercel.app",
+      "https://sprint-9-ecommerce.onrender.com",
+      "https://*.vercel.app"
+    ],
   },
+},
   "strapi::poweredBy",
   "strapi::logger",
   "strapi::query",
