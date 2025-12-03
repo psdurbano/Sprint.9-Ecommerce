@@ -14,8 +14,27 @@ export const cartSlice = createSlice({
       state.items = action.payload;
     },
 
+    addItems: (state, action) => {
+      // Add new items without duplicates
+      const newItems = action.payload.filter(
+        (newItem) => !state.items.some((existingItem) => existingItem.id === newItem.id)
+      );
+      state.items.push(...newItems);
+    },
+
     addToCart: (state, action) => {
-      state.cart = [...state.cart, action.payload.item];
+      const existingItem = state.cart.find((item) => item.id === action.payload.item.id);
+
+      if (existingItem) {
+        // Si el item ya existe, suma las cantidades
+        existingItem.count = (existingItem.count || 1) + (action.payload.item.count || 1);
+      } else {
+        // Si es nuevo, añádelo con la cantidad especificada
+        state.cart.push({
+          ...action.payload.item,
+          count: action.payload.item.count || 1,
+        });
+      }
     },
 
     removeFromCart: (state, action) => {
@@ -25,7 +44,7 @@ export const cartSlice = createSlice({
     increaseCount: (state, action) => {
       state.cart = state.cart.map((item) => {
         if (item.id === action.payload.id) {
-          item.count++;
+          item.count = (item.count || 1) + 1;
         }
         return item;
       });
@@ -33,8 +52,8 @@ export const cartSlice = createSlice({
 
     decreaseCount: (state, action) => {
       state.cart = state.cart.map((item) => {
-        if (item.id === action.payload.id && item.count > 1) {
-          item.count--;
+        if (item.id === action.payload.id && (item.count || 1) > 1) {
+          item.count = (item.count || 1) - 1;
         }
         return item;
       });
@@ -48,6 +67,7 @@ export const cartSlice = createSlice({
 
 export const {
   setItems,
+  addItems,
   addToCart,
   removeFromCart,
   increaseCount,
