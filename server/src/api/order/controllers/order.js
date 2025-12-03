@@ -3,9 +3,65 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const { createCoreController } = require("@strapi/strapi").factories;
 
+// Simple shipping config mirroring the frontend
+const SHIPPING_RATES = {
+  spain: { label: "Spain", amount: 7.5 },
+  europe: { label: "Europe", amount: 15 },
+  row: { label: "Rest of World", amount: 24 },
+};
+
+const EUROPE_COUNTRIES = [
+  "Austria",
+  "Belgium",
+  "Croatia",
+  "Czech Republic",
+  "Denmark",
+  "Estonia",
+  "Finland",
+  "France",
+  "Germany",
+  "Greece",
+  "Hungary",
+  "Ireland",
+  "Italy",
+  "Latvia",
+  "Lithuania",
+  "Luxembourg",
+  "Netherlands",
+  "Poland",
+  "Portugal",
+  "Romania",
+  "Slovakia",
+  "Slovenia",
+  "Spain",
+  "Sweden",
+  "Norway",
+  "Switzerland",
+  "United Kingdom",
+];
+
+function inferShippingZone(countryRaw = "") {
+  const country = (countryRaw || "").trim().toLowerCase();
+  if (!country) return "row";
+
+  if (country.includes("spain") || country.includes("españa")) {
+    return "spain";
+  }
+
+  const isEurope = EUROPE_COUNTRIES.some(
+    (c) => c.toLowerCase() === country
+  );
+
+  return isEurope ? "europe" : "row";
+}
+
+function getShippingRate(zone) {
+  return SHIPPING_RATES[zone]?.amount ?? 0;
+}
+
 module.exports = createCoreController("api::order.order", ({ strapi }) => ({
   async create(ctx) {
-    const { products, userName, email } = ctx.request.body;
+    const { products, userName, email, shippingCountry } = ctx.request.body;
 
     try {
       if (!products || !Array.isArray(products) || products.length === 0) {
@@ -48,6 +104,24 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
         })
       );
 
+      // Add shipping line item based on country
+      const zone = inferShippingZone(shippingCountry);
+      const shippingAmount = getShippingRate(zone);
+      const shippingLabel = SHIPPING_RATES[zone]?.label || "Shipping";
+
+      if (shippingAmount > 0) {
+        lineItems.push({
+          price_data: {
+            currency: "eur",
+            product_data: {
+              name: `Shipping - ${shippingLabel}`,
+            },
+            unit_amount: Math.round(shippingAmount * 100),
+          },
+          quantity: 1,
+        });
+      }
+
       const validLineItems = lineItems.filter((item) => item !== null);
 
       if (validLineItems.length === 0) {
@@ -67,6 +141,7 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
         metadata: {
           userName: userName,
           productCount: products.length,
+          shippingZone: zone,
         },
       });
 
@@ -82,6 +157,8 @@ module.exports = createCoreController("api::order.order", ({ strapi }) => ({
                 total + item.price_data.unit_amount * item.quantity,
               0
             ) / 100,
+          shippingZone: zone,
+          shippingAmount,
         },
       });
 
