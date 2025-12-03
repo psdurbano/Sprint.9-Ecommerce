@@ -14,7 +14,8 @@ import Confirmation from "./pages/checkout/Confirmation";
 import SignupForm from "./pages/global/SignUpForm";
 import AboutUs from "./pages/info/AboutUs";
 import ContactUs from "./pages/info/ContactUs";
-
+import Grading from "./pages/info/Grading";
+import Shipping from "./pages/info/Shipping";
 import theme from "./theme";
 
 import "./styles/global.css";
@@ -53,6 +54,8 @@ function App() {
                 <Route path="/checkout/success" element={<Confirmation />} />
                 <Route path="/about-us" element={<AboutUs />} />
                 <Route path="/contact-us" element={<ContactUs />} />{" "}
+                <Route path="/grading" element={<Grading />} />
+                <Route path="/shipping" element={<Shipping />} />
               </Routes>
             </Box>
             <CartMenu />

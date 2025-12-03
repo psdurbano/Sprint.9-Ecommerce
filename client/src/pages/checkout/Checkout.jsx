@@ -9,6 +9,7 @@ import Payment from "./Payment";
 import Shipping from "./Shipping";
 import { API_ENDPOINTS } from "../../utils/apiConfig";
 import { shades } from "../../theme";
+import ShippingSummary from "./ShippingSummary";
 
 const stripePromise = loadStripe(
   process.env.REACT_APP_STRIPE_PUBLIC_KEY ||
@@ -26,7 +27,10 @@ const Checkout = () => {
   const handleFormSubmit = async (values, actions) => {
     setActiveStep(activeStep + 1);
 
-    if (isFirstStep && values.shippingAddress.isSameAddress) {
+    // FIX: Usar optional chaining consistentemente
+    const useSame = values?.shippingAddress?.isSameAddress ?? true;
+    
+    if (isFirstStep && useSame) {
       actions.setFieldValue("shippingAddress", {
         ...values.billingAddress,
         isSameAddress: true,
@@ -51,10 +55,17 @@ const Checkout = () => {
         throw new Error("Cart is empty");
       }
 
+      // FIX: Optional chaining para acceso seguro
+      const useSame = values?.shippingAddress?.isSameAddress ?? true;
+      const billingCountry = values?.billingAddress?.country || "";
+      const shippingCountry = values?.shippingAddress?.country || "";
+      const countryForShipping = useSame ? billingCountry : shippingCountry || "";
+
       const requestBody = {
         userName: [values.firstName, values.lastName].join(" "),
         email: values.email,
         products: cart.map(({ id, count }) => ({ id, count })),
+        shippingCountry: countryForShipping,
       };
 
       const response = await fetch(API_ENDPOINTS.orders, {
@@ -153,13 +164,16 @@ const Checkout = () => {
                 />
               )}
               {isSecondStep && (
-                <Payment
-                  values={values}
-                  errors={errors}
-                  touched={touched}
-                  handleBlur={handleBlur}
-                  handleChange={handleChange}
-                />
+                <>
+                  <Payment
+                    values={values}
+                    errors={errors}
+                    touched={touched}
+                    handleBlur={handleBlur}
+                    handleChange={handleChange}
+                  />
+                  <ShippingSummary values={values} />
+                </>
               )}
 
               <Box
