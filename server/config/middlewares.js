@@ -42,7 +42,7 @@ module.exports = [
       origin: (origin) => {
         if (!origin) return true;
 
-        const allowed = [
+        const allowedOrigins = [
           "http://localhost:3000",
           "http://localhost:1337",
           "https://ecommerce-allmyrecords.vercel.app",
@@ -50,8 +50,9 @@ module.exports = [
         ];
 
         const isVercelPreview = /^https:\/\/.*\.vercel\.app$/.test(origin);
+        const isAllowed = allowedOrigins.includes(origin) || isVercelPreview;
 
-        return allowed.includes(origin) || isVercelPreview;
+        return isAllowed ? origin : false; // ⬅️ CAMBIO CLAVE: devuelve origin (string) o false
       },
       credentials: true,
       methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
