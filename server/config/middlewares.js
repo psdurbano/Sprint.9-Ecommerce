@@ -39,24 +39,9 @@ module.exports = [
   {
     name: "strapi::cors",
     config: {
-      origin: (origin) => {
-        if (!origin) return true;
-
-        const allowedOrigins = [
-          "http://localhost:3000",
-          "http://localhost:1337",
-          "https://ecommerce-allmyrecords.vercel.app",
-          "https://sprint-9-ecommerce.onrender.com",
-        ];
-
-        const isVercelPreview = /^https:\/\/.*\.vercel\.app$/.test(origin);
-        const isAllowed = allowedOrigins.includes(origin) || isVercelPreview;
-
-        return isAllowed ? origin : false; // ⬅️ CAMBIO CLAVE: devuelve origin (string) o false
-      },
-      credentials: true,
-      methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+      enabled: true,
+      origin: "*",
+      credentials: false,
     },
   },
   "strapi::poweredBy",
