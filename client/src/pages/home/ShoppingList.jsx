@@ -43,6 +43,10 @@ const SORT_OPTIONS = [
 // Infinite scroll configuration
 const ITEMS_PER_PAGE = 24;
 
+// Timeouts – safe for hibernating backends (Render, Railway, Fly.io, etc.)
+const REQUEST_TIMEOUT = 300000; // 5 minutes → gives server time to wake up
+const GLOBAL_TIMEOUT = 240000;  // 4 minutes → final friendly fallback
+
 const ShoppingList = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
@@ -126,12 +130,12 @@ const ShoppingList = () => {
   // Handlers
   const handleCategoryChange = useCallback((categoryValue) => {
     setSelectedCategory(categoryValue);
-    setCurrentPage(1); // Reset to page 1 when category changes
+    setCurrentPage(1);
   }, []);
 
   const handleSearchChange = useCallback((event) => {
     setSearchTerm(event.target.value);
-    setCurrentPage(1); // Reset to page 1 when search changes
+    setCurrentPage(1);
   }, []);
 
   const handleCategoryEvent = useCallback((e) => {
@@ -143,12 +147,12 @@ const ShoppingList = () => {
 
   const handleSortSelect = useCallback((value) => {
     setSortBy(value);
-    setCurrentPage(1); // Reset to page 1 when sort changes
+    setCurrentPage(1);
   }, []);
 
   const handlePriceChange = useCallback((event, newValue) => {
     setPriceRange(newValue);
-    setCurrentPage(1); // Reset to page 1 when price changes
+    setCurrentPage(1);
   }, []);
 
   const toggleFilters = useCallback(() => {
@@ -171,7 +175,6 @@ const ShoppingList = () => {
       setShowFilters(true);
       return;
     }
-
     let lastScrollY = window.scrollY;
     const handleScroll = () => {
       if (Math.abs(lastScrollY - window.scrollY) > 50) {
@@ -179,7 +182,6 @@ const ShoppingList = () => {
       }
       lastScrollY = window.scrollY;
     };
-
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isMobile]);
@@ -197,17 +199,15 @@ const ShoppingList = () => {
       const matchesCategory =
         selectedCategory === "all" ||
         itemCategory === selectedCategory.toLowerCase();
-
       const matchesSearch =
         searchLower === "" || itemName.includes(searchLower);
-
       const matchesPrice =
         itemPrice >= priceRange[0] && itemPrice <= priceRange[1];
 
       return matchesCategory && matchesSearch && matchesPrice;
     });
 
-    // Apply sorting (except for "featured")
+    // Apply sorting (except "featured")
     if (sortBy !== "featured") {
       filtered = [...filtered].sort((a, b) => {
         const aName = a?.attributes?.name || "";
@@ -233,11 +233,10 @@ const ShoppingList = () => {
     return filtered;
   }, [items, selectedCategory, searchTerm, sortBy, priceRange]);
 
-  // Calculate visible items for infinite scroll
+  // Visible items for infinite scroll
   const visibleItems = useMemo(() => {
-    const startIndex = 0;
     const endIndex = currentPage * ITEMS_PER_PAGE;
-    return filteredItems.slice(startIndex, endIndex);
+    return filteredItems.slice(0, endIndex);
   }, [filteredItems, currentPage]);
 
   // Update result count and hasMoreItems
@@ -254,43 +253,39 @@ const ShoppingList = () => {
     const windowHeight = window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
 
-    // Load more when near bottom
     if (scrollTop + windowHeight >= documentHeight - 100) {
-      setCurrentPage(prev => prev + 1);
+      setCurrentPage((prev) => prev + 1);
     }
   }, [hasMoreItems]);
 
-  // Setup scroll listener for infinite scroll
+  // Setup scroll listeners
   useEffect(() => {
     if (hasMoreItems) {
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      window.addEventListener('resize', handleScroll, { passive: true });
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      window.addEventListener("resize", handleScroll, { passive: true });
     }
-
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleScroll);
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleScroll);
     };
   }, [handleScroll, hasMoreItems]);
 
-  // Load more items if page is too short on initial load
+  // Load more if initial content is too short
   useEffect(() => {
     if (hasMoreItems && visibleItems.length > 0) {
       const checkInitialLoad = () => {
         const windowHeight = window.innerHeight;
         const documentHeight = document.documentElement.scrollHeight;
-        
-        // Load more if page doesn't have scroll
+
         if (documentHeight <= windowHeight + 100) {
-          setCurrentPage(prev => prev + 1);
+          setCurrentPage((prev) => prev + 1);
         }
       };
-
       setTimeout(checkInitialLoad, 100);
     }
   }, [hasMoreItems, visibleItems.length]);
 
-  // Listen to external category change events
+  // External category change listener
   useEffect(() => {
     window.addEventListener("categoryChange", handleCategoryEvent);
     return () => {
@@ -298,92 +293,82 @@ const ShoppingList = () => {
     };
   }, [handleCategoryEvent]);
 
-  // Fetch items from API
+  // FETCH ITEMS FROM API – only once if Redux is empty
   useEffect(() => {
-    // Si ya hay items, no hacer fetch
+    // If we already have items → skip fetch
     if (items.length > 0) {
       setIsLoading(false);
       return;
     }
-  
+
     let isMounted = true;
     let loadingTimer = null;
     let hideLoadingTimer = null;
-  
+
+    // Final fallback after 4 minutes → friendly message
+    hideLoadingTimer = setTimeout(() => {
+      if (!isMounted) return;
+      clearTimeout(loadingTimer);
+      setIsLoading(false);
+      setShowLoadingExperience(false);
+      setError("The server is waking up… it’s taking longer than usual. Please wait or refresh.");
+    }, GLOBAL_TIMEOUT);
+
     const fetchItems = async () => {
       if (!isMounted) return;
-  
+
       setIsLoading(true);
       setError(null);
       setShowLoadingExperience(false);
-  
+
       // Show extended loading experience after 5 seconds
       loadingTimer = setTimeout(() => {
         if (isMounted) {
           setShowLoadingExperience(true);
         }
       }, 5000);
-  
+
       try {
-        // AÑADIR timeout para la petición fetch individual
+        // 5-minute timeout so cold-start servers have time to wake up
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout por petición
-        
+        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+
         const response = await fetch(
           `${API_ENDPOINTS.items}?populate=image&pagination[pageSize]=250&sort=name:asc`,
           { signal: controller.signal }
         );
-  
+
         clearTimeout(timeoutId);
-  
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
-  
+
         const data = await response.json();
-  
+
         if (!isMounted) return;
-  
+
         clearTimeout(loadingTimer);
         clearTimeout(hideLoadingTimer);
-  
+
         if (data?.data && Array.isArray(data.data)) {
           dispatch(setItems(data.data));
         } else {
           dispatch(setItems([]));
         }
-  
+
         setIsLoading(false);
         setShowLoadingExperience(false);
       } catch (err) {
         if (!isMounted) return;
-  
+
         console.error("Error fetching items:", err);
-        
-        // Manejar específicamente abort vs network error
-        if (err.name === 'AbortError') {
-          // Timeout de la petición (30s) - NO hacer nada, dejar que el LoadingExperience siga
-        } else {
-          // Error de red - NO establecer error aquí, dejar que el timeout de 4 minutos lo maneje
-        }
+        // If AbortError (5 min) or network error → global timeout will show friendly message
       }
     };
-  
-    // Force timeout after 4 minutes (240 segundos)
-    hideLoadingTimer = setTimeout(() => {
-      if (isMounted) {
-        clearTimeout(loadingTimer);
-        setIsLoading(false);
-        setShowLoadingExperience(false);
-        // Solo establecer error si no hay items cargados
-        if (items.length === 0) {
-          setError("Server took too long to respond. Please try again later.");
-        }
-      }
-    }, 240000);
-  
+
     fetchItems();
-  
+
     return () => {
       isMounted = false;
       if (loadingTimer) clearTimeout(loadingTimer);
@@ -391,11 +376,10 @@ const ShoppingList = () => {
     };
   }, [dispatch, items.length]);
 
-  // Render loading, error, empty or grid
+  // Render states
   const renderLoadingState = useCallback(() => {
     if (!isLoading) return null;
 
-    // Si showLoadingExperience es true, mostrar SOLO el LoadingExperience
     if (showLoadingExperience) {
       return (
         <Box sx={{ py: 4 }}>
@@ -404,7 +388,6 @@ const ShoppingList = () => {
       );
     }
 
-    // Si aún no han pasado 5 segundos, mostrar spinner normal
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
         <Box
@@ -440,9 +423,7 @@ const ShoppingList = () => {
   }, [isLoading, showLoadingExperience, theme.typography.fontFamily]);
 
   const renderErrorState = useCallback(() => {
-    // No mostrar error si estamos mostrando LoadingExperience
     if (showLoadingExperience || !error) return null;
-
     return (
       <Box
         sx={{
@@ -482,11 +463,9 @@ const ShoppingList = () => {
   }, [error, showLoadingExperience, theme.typography.fontFamily]);
 
   const renderEmptyState = useCallback(() => {
-    // No mostrar empty state si estamos cargando o hay error
     if (isLoading || error || showLoadingExperience || visibleItems.length > 0) {
       return null;
     }
-
     return (
       <Box sx={{ textAlign: "center", py: 4 }}>
         <Typography
@@ -516,7 +495,6 @@ const ShoppingList = () => {
   }, [visibleItems, searchTerm, isLoading, error, showLoadingExperience, theme.typography.fontFamily]);
 
   const renderItemsGrid = useCallback(() => {
-    // No mostrar items si estamos cargando, hay error o mostrando LoadingExperience
     if (isLoading || error || showLoadingExperience || !visibleItems.length) return null;
 
     return (
@@ -548,10 +526,9 @@ const ShoppingList = () => {
           ))}
         </Grid>
 
-        {/* Loading indicator when there are more items */}
         {hasMoreItems && (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <CircularProgress size={24} sx={{ color: 'primary.main' }} />
+          <Box sx={{ textAlign: "center", py: 4 }}>
+            <CircularProgress size={24} sx={{ color: "primary.main" }} />
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               Scroll down to load more albums...
             </Typography>
@@ -562,19 +539,10 @@ const ShoppingList = () => {
   }, [visibleItems, isMobile, hasMoreItems, isLoading, error, showLoadingExperience]);
 
   const renderContent = () => {
-    // Prioridad: LoadingExperience > Error > Loading spinner > Empty > Items
-    if (showLoadingExperience) {
-      return renderLoadingState();
-    }
-    if (error) {
-      return renderErrorState();
-    }
-    if (isLoading) {
-      return renderLoadingState();
-    }
-    if (visibleItems.length === 0) {
-      return renderEmptyState();
-    }
+    if (showLoadingExperience) return renderLoadingState();
+    if (error) return renderErrorState();
+    if (isLoading) return renderLoadingState();
+    if (visibleItems.length === 0) return renderEmptyState();
     return renderItemsGrid();
   };
 
@@ -588,7 +556,7 @@ const ShoppingList = () => {
       id="shopping-list"
       sx={{ px: { xs: 2, sm: 3, md: 4 } }}
     >
-      {/* Page title - ocultar cuando se muestra LoadingExperience */}
+      {/* Page title */}
       {!showLoadingExperience && (
         <Box sx={{ textAlign: "center", mb: 4 }}>
           <Typography
@@ -627,7 +595,7 @@ const ShoppingList = () => {
         </Box>
       )}
 
-      {/* Search input - ocultar cuando se muestra LoadingExperience */}
+      {/* Search input */}
       {!showLoadingExperience && (
         <Box
           sx={{ mb: 2, position: "relative", width: "100%", maxWidth: "none" }}
@@ -679,7 +647,6 @@ const ShoppingList = () => {
             }}
             aria-label="Search albums"
           />
-
           {/* Mobile filter toggle */}
           {isMobile && (
             <IconButton
@@ -699,7 +666,7 @@ const ShoppingList = () => {
         </Box>
       )}
 
-      {/* Filters panel - ocultar cuando se muestra LoadingExperience */}
+      {/* Filters panel */}
       {!showLoadingExperience && (
         <Fade in={showFilters} timeout={400}>
           <Paper
@@ -847,7 +814,7 @@ const ShoppingList = () => {
         {renderContent()}
       </Box>
 
-      {/* Result count footer - ocultar cuando se muestra LoadingExperience */}
+      {/* Result count footer */}
       {!showLoadingExperience && !isLoading && !error && (
         <Fade in timeout={500}>
           <Box sx={{ textAlign: "center", mt: 4, mb: 2 }}>
@@ -878,7 +845,8 @@ const ShoppingList = () => {
                   fontFamily: theme.typography.fontFamily,
                 }}
               >
-                Showing {visibleItems.length} of {resultCount} {resultCount === 1 ? "album" : "albums"}
+                Showing {visibleItems.length} of {resultCount}{" "}
+                {resultCount === 1 ? "album" : "albums"}
                 {hasMoreItems && " • Scroll to load more"}
               </Typography>
               <Box
