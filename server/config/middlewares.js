@@ -40,13 +40,7 @@ module.exports = [
     name: "strapi::cors",
     config: {
       enabled: true,
-      origin: [
-        "http://localhost:3000",
-        "http://localhost:1337",
-        "https://ecommerce-allmyrecords.vercel.app",
-        "https://sprint-9-ecommerce.onrender.com",
-        /^https:\/\/.*\.vercel\.app$/,
-      ],
+      origin: "*",
       credentials: false,
     },
   },
