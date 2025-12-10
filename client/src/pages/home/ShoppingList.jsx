@@ -21,7 +21,6 @@ import { API_ENDPOINTS } from "../../utils/apiConfig";
 import SearchIcon from "@mui/icons-material/Search";
 import TuneIcon from "@mui/icons-material/Tune";
 import { shades } from "../../theme";
-import LoadingExperience from "../../utils/LoadingExperience";
 
 // Available categories and sort options
 const CATEGORIES = [
@@ -121,7 +120,7 @@ const ShoppingList = () => {
   const [maxPrice, setMaxPrice] = useState(100);
   const [resultCount, setResultCount] = useState(0);
   const [showFilters, setShowFilters] = useState(!isMobile);
-  const [showLoadingExperience, setShowLoadingExperience] = useState(false);
+  
 
   // Infinite scroll states
   const [currentPage, setCurrentPage] = useState(1);
@@ -310,7 +309,6 @@ const ShoppingList = () => {
       if (!isMounted) return;
       clearTimeout(loadingTimer);
       setIsLoading(false);
-      setShowLoadingExperience(false);
       setError("The server is waking up… it’s taking longer than usual. Please wait or refresh.");
     }, GLOBAL_TIMEOUT);
 
@@ -319,14 +317,6 @@ const ShoppingList = () => {
 
       setIsLoading(true);
       setError(null);
-      setShowLoadingExperience(false);
-
-      // Show extended loading experience after 5 seconds
-      loadingTimer = setTimeout(() => {
-        if (isMounted) {
-          setShowLoadingExperience(true);
-        }
-      }, 5000);
 
       try {
         // 5-minute timeout so cold-start servers have time to wake up
@@ -358,7 +348,6 @@ const ShoppingList = () => {
         }
 
         setIsLoading(false);
-        setShowLoadingExperience(false);
       } catch (err) {
         if (!isMounted) return;
 
@@ -379,14 +368,6 @@ const ShoppingList = () => {
   // Render states
   const renderLoadingState = useCallback(() => {
     if (!isLoading) return null;
-
-    if (showLoadingExperience) {
-      return (
-        <Box sx={{ py: 4 }}>
-          <LoadingExperience show={showLoadingExperience} />
-        </Box>
-      );
-    }
 
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -420,10 +401,10 @@ const ShoppingList = () => {
         </Box>
       </Box>
     );
-  }, [isLoading, showLoadingExperience, theme.typography.fontFamily]);
+  }, [isLoading, theme.typography.fontFamily]);
 
   const renderErrorState = useCallback(() => {
-    if (showLoadingExperience || !error) return null;
+    if (!error) return null;
     return (
       <Box
         sx={{
@@ -460,10 +441,10 @@ const ShoppingList = () => {
         </Typography>
       </Box>
     );
-  }, [error, showLoadingExperience, theme.typography.fontFamily]);
+  }, [error, theme.typography.fontFamily]);
 
   const renderEmptyState = useCallback(() => {
-    if (isLoading || error || showLoadingExperience || visibleItems.length > 0) {
+    if (isLoading || error || visibleItems.length > 0) {
       return null;
     }
     return (
@@ -492,10 +473,10 @@ const ShoppingList = () => {
         </Typography>
       </Box>
     );
-  }, [visibleItems, searchTerm, isLoading, error, showLoadingExperience, theme.typography.fontFamily]);
+  }, [visibleItems, searchTerm, isLoading, error, theme.typography.fontFamily]);
 
   const renderItemsGrid = useCallback(() => {
-    if (isLoading || error || showLoadingExperience || !visibleItems.length) return null;
+    if (isLoading || error || !visibleItems.length) return null;
 
     return (
       <>
@@ -536,10 +517,9 @@ const ShoppingList = () => {
         )}
       </>
     );
-  }, [visibleItems, isMobile, hasMoreItems, isLoading, error, showLoadingExperience]);
+  }, [visibleItems, isMobile, hasMoreItems, isLoading, error]);
 
   const renderContent = () => {
-    if (showLoadingExperience) return renderLoadingState();
     if (error) return renderErrorState();
     if (isLoading) return renderLoadingState();
     if (visibleItems.length === 0) return renderEmptyState();
@@ -557,7 +537,6 @@ const ShoppingList = () => {
       sx={{ px: { xs: 2, sm: 3, md: 4 } }}
     >
       {/* Page title */}
-      {!showLoadingExperience && (
         <Box sx={{ textAlign: "center", mb: 4 }}>
           <Typography
             variant="h3"
@@ -593,10 +572,8 @@ const ShoppingList = () => {
             Discover our curated collection of vinyl records across all genres
           </Typography>
         </Box>
-      )}
 
       {/* Search input */}
-      {!showLoadingExperience && (
         <Box
           sx={{ mb: 2, position: "relative", width: "100%", maxWidth: "none" }}
         >
@@ -664,10 +641,8 @@ const ShoppingList = () => {
             </IconButton>
           )}
         </Box>
-      )}
 
       {/* Filters panel */}
-      {!showLoadingExperience && (
         <Fade in={showFilters} timeout={400}>
           <Paper
             elevation={0}
@@ -803,7 +778,6 @@ const ShoppingList = () => {
             </Grid>
           </Paper>
         </Fade>
-      )}
 
       {/* Items grid or states */}
       <Box
@@ -815,7 +789,7 @@ const ShoppingList = () => {
       </Box>
 
       {/* Result count footer */}
-      {!showLoadingExperience && !isLoading && !error && (
+      {!isLoading && !error && (
         <Fade in timeout={500}>
           <Box sx={{ textAlign: "center", mt: 4, mb: 2 }}>
             <Box
