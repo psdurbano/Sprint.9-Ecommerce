@@ -1,3 +1,5 @@
+// config/middlewares.js
+
 module.exports = [
   "strapi::errors",
   {
@@ -19,6 +21,7 @@ module.exports = [
             "'self'",
             "'unsafe-inline'",
             "https://js.stripe.com",
+            "https://checkout.stripe.com",
             "blob:",
           ],
           "style-src": ["'self'", "'unsafe-inline'", "https:"],
@@ -26,6 +29,7 @@ module.exports = [
             "'self'",
             "https://js.stripe.com",
             "https://hooks.stripe.com",
+            "https://checkout.stripe.com",
           ],
           "font-src": ["'self'", "https:", "data:"],
         },
@@ -36,13 +40,8 @@ module.exports = [
     name: "strapi::cors",
     config: {
       enabled: true,
-      headers: "*",
-      origin: [
-        "http://localhost:3000",
-        "http://localhost:1337",
-        "https://ecommerce-allmyrecords.vercel.app",
-        "https://sprint-9-ecommerce.onrender.com",
-      ],
+      origin: "*",
+      credentials: false,
     },
   },
   "strapi::poweredBy",
