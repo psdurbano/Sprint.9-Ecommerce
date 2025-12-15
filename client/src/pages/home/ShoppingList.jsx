@@ -341,6 +341,7 @@ const ShoppingList = () => {
         if (data?.data && Array.isArray(data.data)) {
           const normalizedItems = data.data.map((raw) => ({
             id: raw.id,
+            documentId: raw.documentId, // ← importante para rutas
             attributes: {
               name: raw.name,
               shortDescription: raw.shortDescription,
