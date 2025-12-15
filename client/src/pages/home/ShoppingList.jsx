@@ -43,8 +43,8 @@ const SORT_OPTIONS = [
 const ITEMS_PER_PAGE = 24;
 
 // Timeouts – safe for hibernating backends (Render, Railway, Fly.io, etc.)
-const REQUEST_TIMEOUT = 300000; // 5 minutes → gives server time to wake up
-const GLOBAL_TIMEOUT = 240000;  // 4 minutes → final friendly fallback
+const REQUEST_TIMEOUT = 300000; // 5 minutes
+const GLOBAL_TIMEOUT = 240000;  // 4 minutes
 
 const ShoppingList = () => {
   const theme = useTheme();
@@ -120,7 +120,6 @@ const ShoppingList = () => {
   const [maxPrice, setMaxPrice] = useState(100);
   const [resultCount, setResultCount] = useState(0);
   const [showFilters, setShowFilters] = useState(!isMobile);
-  
 
   // Infinite scroll states
   const [currentPage, setCurrentPage] = useState(1);
@@ -206,7 +205,6 @@ const ShoppingList = () => {
       return matchesCategory && matchesSearch && matchesPrice;
     });
 
-    // Apply sorting (except "featured")
     if (sortBy !== "featured") {
       filtered = [...filtered].sort((a, b) => {
         const aName = a?.attributes?.name || "";
@@ -294,7 +292,6 @@ const ShoppingList = () => {
 
   // FETCH ITEMS FROM API – only once if Redux is empty
   useEffect(() => {
-    // If we already have items → skip fetch
     if (items.length > 0) {
       setIsLoading(false);
       return;
@@ -304,12 +301,13 @@ const ShoppingList = () => {
     let loadingTimer = null;
     let hideLoadingTimer = null;
 
-    // Final fallback after 4 minutes → friendly message
     hideLoadingTimer = setTimeout(() => {
       if (!isMounted) return;
       clearTimeout(loadingTimer);
       setIsLoading(false);
-      setError("The server is waking up… it’s taking longer than usual. Please wait or refresh.");
+      setError(
+        "The server is waking up… it’s taking longer than usual. Please wait or refresh."
+      );
     }, GLOBAL_TIMEOUT);
 
     const fetchItems = async () => {
@@ -319,7 +317,6 @@ const ShoppingList = () => {
       setError(null);
 
       try {
-        // 5-minute timeout so cold-start servers have time to wake up
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
@@ -342,7 +339,24 @@ const ShoppingList = () => {
         clearTimeout(hideLoadingTimer);
 
         if (data?.data && Array.isArray(data.data)) {
-          dispatch(setItems(data.data));
+          const normalizedItems = data.data.map((raw) => ({
+            id: raw.id,
+            attributes: {
+              name: raw.name,
+              shortDescription: raw.shortDescription,
+              longDescription: raw.longDescription,
+              price: raw.price,
+              category: raw.category,
+              mediaCondition: raw.mediaCondition,
+              sleeveCondition: raw.sleeveCondition,
+              createdAt: raw.createdAt,
+              updatedAt: raw.updatedAt,
+              publishedAt: raw.publishedAt,
+              documentId: raw.documentId,
+              image: raw.image,
+            },
+          }));
+          dispatch(setItems(normalizedItems));
         } else {
           dispatch(setItems([]));
         }
@@ -350,9 +364,7 @@ const ShoppingList = () => {
         setIsLoading(false);
       } catch (err) {
         if (!isMounted) return;
-
         console.error("Error fetching items:", err);
-        // If AbortError (5 min) or network error → global timeout will show friendly message
       }
     };
 
@@ -537,247 +549,246 @@ const ShoppingList = () => {
       sx={{ px: { xs: 2, sm: 3, md: 4 } }}
     >
       {/* Page title */}
-        <Box sx={{ textAlign: "center", mb: 4 }}>
-          <Typography
-            variant="h3"
-            component="h1"
+      <Box sx={{ textAlign: "center", mb: 4 }}>
+        <Typography
+          variant="h3"
+          component="h1"
+          sx={{
+            mb: 2,
+            fontWeight: 600,
+            fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+            fontFamily: theme.typography.fontFamily,
+          }}
+        >
+          Our Featured{" "}
+          <Box
+            component="span"
             sx={{
-              mb: 2,
-              fontWeight: 600,
-              fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
-              fontFamily: theme.typography.fontFamily,
+              color: "primary.main",
+              fontWeight: 700,
             }}
           >
-            Our Featured{" "}
-            <Box
-              component="span"
-              sx={{
-                color: "primary.main",
-                fontWeight: 700,
-              }}
-            >
-              Albums
-            </Box>
-          </Typography>
-          <Typography
-            variant="body1"
-            color="text.secondary"
-            sx={{
-              maxWidth: 600,
-              mx: "auto",
-              mb: 3,
-              fontFamily: theme.typography.fontFamily,
-            }}
-          >
-            Discover our curated collection of vinyl records across all genres
-          </Typography>
-        </Box>
+            Albums
+          </Box>
+        </Typography>
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{
+            maxWidth: 600,
+            mx: "auto",
+            mb: 3,
+            fontFamily: theme.typography.fontFamily,
+          }}
+        >
+          Discover our curated collection of vinyl records across all genres
+        </Typography>
+      </Box>
 
       {/* Search input */}
-        <Box
-          sx={{ mb: 2, position: "relative", width: "100%", maxWidth: "none" }}
-        >
-          <SearchIcon
+      <Box
+        sx={{ mb: 2, position: "relative", width: "100%", maxWidth: "none" }}
+      >
+        <SearchIcon
+          sx={{
+            position: "absolute",
+            left: 16,
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "text.secondary",
+            opacity: 0.6,
+            fontSize: 20,
+          }}
+        />
+        <Input
+          value={searchTerm}
+          onChange={handleSearchChange}
+          placeholder="Search albums by name..."
+          fullWidth
+          disableUnderline
+          sx={{
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 0,
+            px: 4,
+            py: 1.5,
+            transition: "all 0.3s ease",
+            bgcolor: "background.paper",
+            fontSize: "0.95rem",
+            fontFamily: theme.typography.fontFamily,
+            "&:hover": {
+              borderColor: "primary.main",
+              bgcolor: shades.neutral[50],
+            },
+            "&.Mui-focused": {
+              borderColor: "primary.main",
+              boxShadow: `0 0 0 1px ${theme.palette.primary.main}20`,
+              bgcolor: "background.paper",
+            },
+            "& .MuiInput-input": {
+              py: 0.5,
+              textAlign: "left",
+              fontFamily: theme.typography.fontFamily,
+              "&::placeholder": {
+                opacity: 0.6,
+                color: "text.secondary",
+              },
+            },
+          }}
+          aria-label="Search albums"
+        />
+        {isMobile && (
+          <IconButton
+            onClick={toggleFilters}
             sx={{
               position: "absolute",
-              left: 16,
+              right: 8,
               top: "50%",
               transform: "translateY(-50%)",
               color: "text.secondary",
-              opacity: 0.6,
-              fontSize: 20,
-            }}
-          />
-          <Input
-            value={searchTerm}
-            onChange={handleSearchChange}
-            placeholder="Search albums by name..."
-            fullWidth
-            disableUnderline
-            sx={{
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: 0,
-              px: 4,
-              py: 1.5,
-              transition: "all 0.3s ease",
-              bgcolor: "background.paper",
-              fontSize: "0.95rem",
-              fontFamily: theme.typography.fontFamily,
-              "&:hover": {
-                borderColor: "primary.main",
-                bgcolor: shades.neutral[50],
-              },
-              "&.Mui-focused": {
-                borderColor: "primary.main",
-                boxShadow: `0 0 0 1px ${theme.palette.primary.main}20`,
-                bgcolor: "background.paper",
-              },
-              "& .MuiInput-input": {
-                py: 0.5,
-                textAlign: "left",
-                fontFamily: theme.typography.fontFamily,
-                "&::placeholder": {
-                  opacity: 0.6,
-                  color: "text.secondary",
-                },
-              },
-            }}
-            aria-label="Search albums"
-          />
-          {/* Mobile filter toggle */}
-          {isMobile && (
-            <IconButton
-              onClick={toggleFilters}
-              sx={{
-                position: "absolute",
-                right: 8,
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "text.secondary",
-                opacity: 0.7,
-              }}
-            >
-              <TuneIcon fontSize="small" />
-            </IconButton>
-          )}
-        </Box>
-
-      {/* Filters panel */}
-        <Fade in={showFilters} timeout={400}>
-          <Paper
-            elevation={0}
-            sx={{
-              mb: showFilters ? 3 : 0,
-              p: { xs: 2, sm: 3 },
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: 0,
-              bgcolor: "background.paper",
-              opacity: showFilters ? 1 : 0,
-              transform: showFilters ? "translateY(0)" : "translateY(-10px)",
-              transition: "all 0.3s ease",
-              height: showFilters ? "auto" : 0,
-              overflow: "hidden",
-              visibility: showFilters ? "visible" : "hidden",
+              opacity: 0.7,
             }}
           >
-            {/* Genre filter */}
-            <Box sx={{ mb: 3 }}>
-              {renderFilterLabel("Genre")}
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 1,
-                  flexWrap: "wrap",
-                  justifyContent: "flex-start",
-                }}
-              >
-                {CATEGORIES.map((category) => (
+            <TuneIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Box>
+
+      {/* Filters panel */}
+      <Fade in={showFilters} timeout={400}>
+        <Paper
+          elevation={0}
+          sx={{
+            mb: showFilters ? 3 : 0,
+            p: { xs: 2, sm: 3 },
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 0,
+            bgcolor: "background.paper",
+            opacity: showFilters ? 1 : 0,
+            transform: showFilters ? "translateY(0)" : "translateY(-10px)",
+            transition: "all 0.3s ease",
+            height: showFilters ? "auto" : 0,
+            overflow: "hidden",
+            visibility: showFilters ? "visible" : "hidden",
+          }}
+        >
+          {/* Genre filter */}
+          <Box sx={{ mb: 3 }}>
+            {renderFilterLabel("Genre")}
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                flexWrap: "wrap",
+                justifyContent: "flex-start",
+              }}
+            >
+              {CATEGORIES.map((category) => (
+                <Chip
+                  key={category.value}
+                  label={category.label}
+                  onClick={() => handleCategoryChange(category.value)}
+                  variant={
+                    selectedCategory === category.value ? "filled" : "outlined"
+                  }
+                  size={isMobile ? "small" : "medium"}
+                  sx={getChipStyles(selectedCategory === category.value)}
+                />
+              ))}
+            </Box>
+          </Box>
+
+          {renderDivider()}
+
+          {/* Sort & Price filters */}
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              {renderFilterLabel("Sort By")}
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                {SORT_OPTIONS.map((option) => (
                   <Chip
-                    key={category.value}
-                    label={category.label}
-                    onClick={() => handleCategoryChange(category.value)}
-                    variant={
-                      selectedCategory === category.value ? "filled" : "outlined"
-                    }
+                    key={option.value}
+                    label={option.label}
+                    onClick={() => handleSortSelect(option.value)}
+                    variant={sortBy === option.value ? "filled" : "outlined"}
                     size={isMobile ? "small" : "medium"}
-                    sx={getChipStyles(selectedCategory === category.value)}
+                    sx={getChipStyles(sortBy === option.value)}
                   />
                 ))}
               </Box>
-            </Box>
+            </Grid>
 
-            {renderDivider()}
-
-            {/* Sort & Price filters */}
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                {renderFilterLabel("Sort By")}
-                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                  {SORT_OPTIONS.map((option) => (
-                    <Chip
-                      key={option.value}
-                      label={option.label}
-                      onClick={() => handleSortSelect(option.value)}
-                      variant={sortBy === option.value ? "filled" : "outlined"}
-                      size={isMobile ? "small" : "medium"}
-                      sx={getChipStyles(sortBy === option.value)}
-                    />
-                  ))}
-                </Box>
-              </Grid>
-
-              <Grid item xs={12} sm={6}>
-                {renderFilterLabel("Price Range")}
-                <Box sx={{ px: 1 }}>
-                  <Box
+            <Grid item xs={12} sm={6}>
+              {renderFilterLabel("Price Range")}
+              <Box sx={{ px: 1 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 1.5,
+                  }}
+                >
+                  <Typography
+                    variant="body2"
                     sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      mb: 1.5,
+                      fontSize: "0.8rem",
+                      fontWeight: 500,
+                      opacity: 0.8,
+                      fontFamily: theme.typography.fontFamily,
                     }}
                   >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontSize: "0.8rem",
-                        fontWeight: 500,
-                        opacity: 0.8,
-                        fontFamily: theme.typography.fontFamily,
-                      }}
-                    >
-                      €{priceRange[0]}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontSize: "0.8rem",
-                        fontWeight: 500,
-                        opacity: 0.8,
-                        fontFamily: theme.typography.fontFamily,
-                      }}
-                    >
-                      €{priceRange[1]}
-                    </Typography>
-                  </Box>
-                  <Slider
-                    value={priceRange}
-                    onChange={handlePriceChange}
-                    valueLabelDisplay="auto"
-                    min={0}
-                    max={maxPrice}
+                    €{priceRange[0]}
+                  </Typography>
+                  <Typography
+                    variant="body2"
                     sx={{
-                      color: "primary.main",
-                      height: 2,
-                      "& .MuiSlider-thumb": {
-                        width: 12,
-                        height: 12,
-                        borderRadius: 0,
-                        transition: "all 0.2s ease",
-                        "&:hover, &.Mui-focusVisible": {
-                          boxShadow: `0 0 0 8px ${theme.palette.primary.main}20`,
-                        },
-                      },
-                      "& .MuiSlider-track": {
-                        height: 2,
-                      },
-                      "& .MuiSlider-rail": {
-                        height: 2,
-                        opacity: 0.3,
-                        backgroundColor: shades.neutral[300],
-                      },
-                      "& .MuiSlider-valueLabel": {
-                        backgroundColor: "primary.main",
-                        borderRadius: 0,
-                        fontSize: "0.7rem",
-                        fontFamily: theme.typography.fontFamily,
-                      },
+                      fontSize: "0.8rem",
+                      fontWeight: 500,
+                      opacity: 0.8,
+                      fontFamily: theme.typography.fontFamily,
                     }}
-                  />
+                  >
+                    €{priceRange[1]}
+                  </Typography>
                 </Box>
-              </Grid>
+                <Slider
+                  value={priceRange}
+                  onChange={handlePriceChange}
+                  valueLabelDisplay="auto"
+                  min={0}
+                  max={maxPrice}
+                  sx={{
+                    color: "primary.main",
+                    height: 2,
+                    "& .MuiSlider-thumb": {
+                      width: 12,
+                      height: 12,
+                      borderRadius: 0,
+                      transition: "all 0.2s ease",
+                      "&:hover, &.Mui-focusVisible": {
+                        boxShadow: `0 0 0 8px ${theme.palette.primary.main}20`,
+                      },
+                    },
+                    "& .MuiSlider-track": {
+                      height: 2,
+                    },
+                    "& .MuiSlider-rail": {
+                      height: 2,
+                      opacity: 0.3,
+                      backgroundColor: shades.neutral[300],
+                    },
+                    "& .MuiSlider-valueLabel": {
+                      backgroundColor: "primary.main",
+                      borderRadius: 0,
+                      fontSize: "0.7rem",
+                      fontFamily: theme.typography.fontFamily,
+                    },
+                  }}
+                />
+              </Box>
             </Grid>
-          </Paper>
-        </Fade>
+          </Grid>
+        </Paper>
+      </Fade>
 
       {/* Items grid or states */}
       <Box
