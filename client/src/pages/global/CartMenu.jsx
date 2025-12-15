@@ -11,7 +11,12 @@ import { useSelector, useDispatch } from "react-redux";
 import CloseIcon from "@mui/icons-material/Close";
 import styled from "@emotion/styled";
 import { shades } from "../../theme";
-import { removeFromCart, setIsCartOpen, increaseCount, decreaseCount } from "../../state";
+import {
+  removeFromCart,
+  setIsCartOpen,
+  increaseCount,
+  decreaseCount,
+} from "../../state";
 import { useNavigate } from "react-router-dom";
 import { getImageUrl } from "../../utils/imageHelper";
 import AddIcon from "@mui/icons-material/Add";
@@ -84,10 +89,14 @@ const CartMenu = () => {
   );
 
   const handleImageClick = useCallback(
-    (itemId, e) => {
+    (item, e) => {
       e.stopPropagation();
-      navigate(`/item/${itemId}`);
-      handleCloseCart();
+      const documentId =
+        item.documentId || item.attributes?.documentId || null;
+      if (documentId) {
+        navigate(`/item/${documentId}`);
+        handleCloseCart();
+      }
     },
     [navigate, handleCloseCart]
   );
@@ -236,10 +245,17 @@ const CartMenu = () => {
         >
           {cart?.length ? (
             cart.map((item) => (
-              <Box key={item.id} sx={{ mb: 2, pb: 2, borderBottom: `1px solid ${shades.neutral[300]}` }}>
+              <Box
+                key={item.id}
+                sx={{
+                  mb: 2,
+                  pb: 2,
+                  borderBottom: `1px solid ${shades.neutral[300]}`,
+                }}
+              >
                 <FlexBox sx={{ mb: 1 }}>
                   <Box
-                    onClick={(e) => handleImageClick(item.id, e)}
+                    onClick={(e) => handleImageClick(item, e)}
                     sx={{
                       width: "60px",
                       height: "60px",
@@ -268,7 +284,7 @@ const CartMenu = () => {
 
                   <Box sx={{ flex: 1, ml: 2 }}>
                     <Typography
-                      onClick={(e) => handleImageClick(item.id, e)}
+                      onClick={(e) => handleImageClick(item, e)}
                       sx={{
                         fontSize: "0.85rem",
                         fontFamily: theme.typography.fontFamily,
@@ -288,7 +304,9 @@ const CartMenu = () => {
                         mb: 0.5,
                       }}
                     >
-                      €{((item?.attributes?.price || 0) * (item?.count || 1)).toFixed(2)}
+                      €{(
+                        (item?.attributes?.price || 0) * (item?.count || 1)
+                      ).toFixed(2)}
                     </Typography>
                   </Box>
 
@@ -306,8 +324,16 @@ const CartMenu = () => {
                 </FlexBox>
 
                 {/* Quantity Controls */}
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Typography sx={{ fontSize: "0.75rem", fontFamily: theme.typography.fontFamily, color: shades.primary[400] }}>
+                <Box
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: "0.75rem",
+                      fontFamily: theme.typography.fontFamily,
+                      color: shades.primary[400],
+                    }}
+                  >
                     Qty:
                   </Typography>
                   <IconButton
@@ -407,15 +433,15 @@ const CartMenu = () => {
             </FlexBox>
 
             <Typography
-                variant="caption"
-                sx={{
-                  fontFamily: theme.typography.fontFamily,
-                  color: "text.secondary",
-                  fontSize: "0.7rem",
-                }}
-              >
-                Incl. taxes (plus applicable shipping costs)
-              </Typography>
+              variant="caption"
+              sx={{
+                fontFamily: theme.typography.fontFamily,
+                color: "text.secondary",
+                fontSize: "0.7rem",
+              }}
+            >
+              Incl. taxes (plus applicable shipping costs)
+            </Typography>
 
             <Button
               onClick={handleCheckout}
