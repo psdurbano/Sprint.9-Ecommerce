@@ -35,13 +35,37 @@ const Item = ({ item }) => {
     return b.slice(0, 2);
   }, [item]);
 
-  const { id, name, price, category, imageUrl, isInCart } = useMemo(() => {
+  const {
+    id,
+    documentId,
+    name,
+    price,
+    category,
+    imageUrl,
+    isInCart,
+  } = useMemo(() => {
     if (!item?.attributes) {
-      return { id: null, name: "Unnamed", price: 0, category: "Unknown", imageUrl: "", isInCart: false };
+      return {
+        id: null,
+        documentId: null,
+        name: "Unnamed",
+        price: 0,
+        category: "Unknown",
+        imageUrl: "",
+        isInCart: false,
+      };
     }
-    const { name = "Unnamed", price = 0, category = "Unknown" } = item.attributes;
+
+    const {
+      name = "Unnamed",
+      price = 0,
+      category = "Unknown",
+      documentId: attrDocumentId,
+    } = item.attributes;
+
     return {
       id: item.id,
+      documentId: item.documentId || attrDocumentId || null,
       name,
       price,
       category,
@@ -63,9 +87,13 @@ const Item = ({ item }) => {
     [dispatch, item, isInCart, adding]
   );
 
-  const goToDetail = useCallback(() => id && navigate(`/item/${id}`), [navigate, id]);
+  const goToDetail = useCallback(
+    () => documentId && navigate(`/item/${documentId}`),
+    [navigate, documentId]
+  );
 
-  if (!item?.attributes) return <Box sx={{ aspectRatio: "1", bgcolor: "neutral.100" }} />;
+  if (!item?.attributes)
+    return <Box sx={{ aspectRatio: "1", bgcolor: "neutral.100" }} />;
 
   return (
     <Box
@@ -207,15 +235,47 @@ const Item = ({ item }) => {
 
       {/* Info */}
       <Box>
-        <Typography variant="caption" sx={{ display: "block", fontWeight: 500, textTransform: "uppercase", color: "text.secondary", letterSpacing: 1, fontSize: "0.7rem", opacity: 0.8, mb: 0.5 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            display: "block",
+            fontWeight: 500,
+            textTransform: "uppercase",
+            color: "text.secondary",
+            letterSpacing: 1,
+            fontSize: "0.7rem",
+            opacity: 0.8,
+            mb: 0.5,
+          }}
+        >
           {category}
         </Typography>
 
-        <Typography variant="h6" sx={{ fontWeight: 400, fontSize: "1rem", lineHeight: 1.4, mb: 1, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 400,
+            fontSize: "1rem",
+            lineHeight: 1.4,
+            mb: 1,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
           {name}
         </Typography>
 
-        <Typography variant="h6" sx={{ fontWeight: 600, color: "primary.main", fontSize: "1.15rem", letterSpacing: "-0.5px" }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 600,
+            color: "primary.main",
+            fontSize: "1.15rem",
+            letterSpacing: "-0.5px",
+          }}
+        >
           €{price.toFixed(2)}
         </Typography>
       </Box>
