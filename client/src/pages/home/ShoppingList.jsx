@@ -42,7 +42,7 @@ const SORT_OPTIONS = [
 // Infinite scroll configuration
 const ITEMS_PER_PAGE = 24;
 
-// Timeouts – safe for hibernating backends (Render, Railway, Fly.io, etc.)
+// Timeouts – safe for hibernating backends
 const REQUEST_TIMEOUT = 300000; // 5 minutes
 const GLOBAL_TIMEOUT = 240000;  // 4 minutes
 
@@ -353,7 +353,16 @@ const ShoppingList = () => {
               updatedAt: raw.updatedAt,
               publishedAt: raw.publishedAt,
               documentId: raw.documentId,
-              image: raw.image,
+              image: raw.image
+                ? {
+                    data: {
+                      id: raw.image.id,
+                      attributes: {
+                        ...raw.image,
+                      },
+                    },
+                  }
+                : null,
             },
           }));
           dispatch(setItems(normalizedItems));
