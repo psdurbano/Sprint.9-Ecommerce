@@ -36,7 +36,7 @@ const ItemDetails = () => {
 
   const [activeTab, setActiveTab] = useState("description");
   const [item, setItem] = useState(null);
-  const [itemsFromStore, setItemsFromStore] = useState([]); // solo si no están en Redux
+  const [itemsFromStore, setItemsFromStore] = useState([]);
   const [isInWishlist, setIsInWishlist] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,7 +47,7 @@ const ItemDetails = () => {
   const [stockAvailable] = useState(true);
   const [stockCount] = useState(5);
 
-  // Accedemos a los ítems ya cargados en Redux (por ShoppingList)
+  // Items from Redux (ShoppingList)
   const itemsFromRedux = useSelector((state) => state.cart.items || []);
   const cart = useSelector((state) => state.cart.cart);
 
@@ -108,14 +108,17 @@ const ItemDetails = () => {
     setImageLoaded(true);
   }, []);
 
-  const handleNavigation = useCallback((itemId) => {
-    if (itemId) {
-      navigate(`/item/${itemId}`);
-      window.scrollTo(0, 0);
-    }
-  }, [navigate]);
+  const handleNavigation = useCallback(
+    (id) => {
+      if (id) {
+        navigate(`/item/${id}`);
+        window.scrollTo(0, 0);
+      }
+    },
+    [navigate]
+  );
 
-  // Determinar qué conjunto de ítems usar
+  // Decide which items list to use
   const allItems = itemsFromRedux.length > 0 ? itemsFromRedux : itemsFromStore;
 
   useEffect(() => {
@@ -129,7 +132,40 @@ const ItemDetails = () => {
         if (!itemResponse.ok) throw new Error("Failed to fetch item");
         const itemJson = await itemResponse.json();
         if (!isMounted) return;
-        setItem(itemJson.data);
+
+        if (itemJson?.data) {
+          const raw = itemJson.data;
+          const normalized = {
+            id: raw.id,
+            attributes: {
+              name: raw.name,
+              shortDescription: raw.shortDescription,
+              longDescription: raw.longDescription,
+              tracklist: raw.tracklist,
+              price: raw.price,
+              category: raw.category,
+              mediaCondition: raw.mediaCondition,
+              sleeveCondition: raw.sleeveCondition,
+              createdAt: raw.createdAt,
+              updatedAt: raw.updatedAt,
+              publishedAt: raw.publishedAt,
+              documentId: raw.documentId,
+              image: raw.image
+                ? {
+                    data: {
+                      id: raw.image.id,
+                      attributes: {
+                        ...raw.image,
+                      },
+                    },
+                  }
+                : null,
+            },
+          };
+          setItem(normalized);
+        } else {
+          setItem(null);
+        }
       } catch (err) {
         if (isMounted) {
           setError(err.message);
@@ -139,14 +175,16 @@ const ItemDetails = () => {
     };
 
     const fetchMinimalItems = async () => {
-      // Solo si Redux no tiene ítems (acceso directo)
       if (itemsFromRedux.length > 0) return;
 
       try {
-        // Cargar solo 2 páginas (48 ítems) para navegación y relacionados
         const responses = await Promise.all([
-          fetch(`${API_ENDPOINTS.items}?populate=image&pagination[page]=1&pagination[pageSize]=24`),
-          fetch(`${API_ENDPOINTS.items}?populate=image&pagination[page]=2&pagination[pageSize]=24`),
+          fetch(
+            `${API_ENDPOINTS.items}?populate=image&pagination[page]=1&pagination[pageSize]=24`
+          ),
+          fetch(
+            `${API_ENDPOINTS.items}?populate=image&pagination[page]=2&pagination[pageSize]=24`
+          ),
         ]);
 
         const allData = await Promise.all(
@@ -154,10 +192,39 @@ const ItemDetails = () => {
         );
 
         const combined = [...allData[0].data, ...allData[1].data];
-        if (isMounted) setItemsFromStore(combined);
+
+        if (isMounted) {
+          const normalized = combined.map((raw) => ({
+            id: raw.id,
+            attributes: {
+              name: raw.name,
+              shortDescription: raw.shortDescription,
+              longDescription: raw.longDescription,
+              tracklist: raw.tracklist,
+              price: raw.price,
+              category: raw.category,
+              mediaCondition: raw.mediaCondition,
+              sleeveCondition: raw.sleeveCondition,
+              createdAt: raw.createdAt,
+              updatedAt: raw.updatedAt,
+              publishedAt: raw.publishedAt,
+              documentId: raw.documentId,
+              image: raw.image
+                ? {
+                    data: {
+                      id: raw.image.id,
+                      attributes: {
+                        ...raw.image,
+                      },
+                    },
+                  }
+                : null,
+            },
+          }));
+          setItemsFromStore(normalized);
+        }
       } catch (err) {
         console.warn("Could not fetch minimal items list:", err);
-        // No es crítico: solo afecta navegación prev/next y relacionados
       }
     };
 
@@ -439,7 +506,12 @@ const ItemDetails = () => {
             alignItems="center"
             sx={{ mb: 4, py: 1, flexWrap: "wrap", gap: 1 }}
           >
-            <Box display="flex" alignItems="center" gap={0.75} sx={{ flex: 1, minWidth: "200px" }}>
+            <Box
+              display="flex"
+              alignItems="center"
+              gap={0.75}
+              sx={{ flex: 1, minWidth: "200px" }}
+            >
               <Box
                 component={Link}
                 to="/"
@@ -466,12 +538,36 @@ const ItemDetails = () => {
                   Store
                 </Typography>
               </Box>
-              <Typography sx={{ fontSize: "0.7rem", color: theme.palette.divider }}> / </Typography>
-              <Typography sx={{ fontSize: "0.7rem", fontFamily: theme.typography.fontFamily, color: theme.palette.text.secondary, textTransform: "capitalize" }}>
+              <Typography
+                sx={{ fontSize: "0.7rem", color: theme.palette.divider }}
+              >
+                {" "}
+                /{" "}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: "0.7rem",
+                  fontFamily: theme.typography.fontFamily,
+                  color: theme.palette.text.secondary,
+                  textTransform: "capitalize",
+                }}
+              >
                 {item.attributes.category || "Products"}
               </Typography>
-              <Typography sx={{ fontSize: "0.7rem", color: theme.palette.divider }}> / </Typography>
-              <Typography sx={{ fontSize: "0.7rem", fontFamily: theme.typography.fontFamily, color: theme.palette.text.primary, fontWeight: 500 }}>
+              <Typography
+                sx={{ fontSize: "0.7rem", color: theme.palette.divider }}
+              >
+                {" "}
+                /{" "}
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: "0.7rem",
+                  fontFamily: theme.typography.fontFamily,
+                  color: theme.palette.text.primary,
+                  fontWeight: 500,
+                }}
+              >
                 {item.attributes.name}
               </Typography>
             </Box>
@@ -489,7 +585,14 @@ const ItemDetails = () => {
               >
                 <NavigateBeforeIcon sx={{ fontSize: 16 }} />
               </IconButton>
-              <Box sx={{ width: "1px", height: "12px", backgroundColor: "divider", mx: 0.5 }} />
+              <Box
+                sx={{
+                  width: "1px",
+                  height: "12px",
+                  backgroundColor: "divider",
+                  mx: 0.5,
+                }}
+              />
               <IconButton
                 onClick={() => nextItem && handleNavigation(nextItem.id)}
                 disabled={!nextItem}
@@ -545,16 +648,53 @@ const ItemDetails = () => {
             </Box>
             {item.attributes.tracklist && (
               <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" sx={{ fontSize: "0.8rem", fontWeight: 500, mb: 1, fontFamily: theme.typography.fontFamily }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontSize: "0.8rem",
+                    fontWeight: 500,
+                    mb: 1,
+                    fontFamily: theme.typography.fontFamily,
+                  }}
+                >
                   Tracklist
                 </Typography>
-                <Box component="ul" sx={{ listStyle: "none", p: 0, m: 0, fontFamily: theme.typography.fontFamily, fontSize: "0.8rem", lineHeight: 1.3 }}>
+                <Box
+                  component="ul"
+                  sx={{
+                    listStyle: "none",
+                    p: 0,
+                    m: 0,
+                    fontFamily: theme.typography.fontFamily,
+                    fontSize: "0.8rem",
+                    lineHeight: 1.3,
+                  }}
+                >
                   {item.attributes.tracklist
                     .split("\n")
                     .map((track, index) =>
                       track.trim() ? (
-                        <Typography key={index} component="li" sx={{ mb: 0.25, display: "flex", alignItems: "flex-start", fontSize: "0.8rem" }}>
-                          <Typography component="span" sx={{ mr: 1, minWidth: 18, fontWeight: 600, color: "primary.main", fontSize: "0.8rem", fontFamily: theme.typography.fontFamily }}>
+                        <Typography
+                          key={index}
+                          component="li"
+                          sx={{
+                            mb: 0.25,
+                            display: "flex",
+                            alignItems: "flex-start",
+                            fontSize: "0.8rem",
+                          }}
+                        >
+                          <Typography
+                            component="span"
+                            sx={{
+                              mr: 1,
+                              minWidth: 18,
+                              fontWeight: 600,
+                              color: "primary.main",
+                              fontSize: "0.8rem",
+                              fontFamily: theme.typography.fontFamily,
+                            }}
+                          >
                             {index + 1}.
                           </Typography>
                           <span>{track.trim()}</span>
@@ -566,20 +706,53 @@ const ItemDetails = () => {
             )}
             {item.attributes.longDescription && (
               <Box sx={{ mt: 2, mb: 2 }}>
-                {item.attributes.longDescription.split("\n").map((line, i) => (
-                  <Typography key={i} variant="body2" sx={{ mb: 1, lineHeight: 1.4, fontSize: "0.85rem", fontFamily: theme.typography.fontFamily }}>
-                    {line}
-                  </Typography>
-                ))}
+                {item.attributes.longDescription
+                  .split("\n")
+                  .map((line, i) => (
+                    <Typography
+                      key={i}
+                      variant="body2"
+                      sx={{
+                        mb: 1,
+                        lineHeight: 1.4,
+                        fontSize: "0.85rem",
+                        fontFamily: theme.typography.fontFamily,
+                      }}
+                    >
+                      {line}
+                    </Typography>
+                  ))}
               </Box>
             )}
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3, flexWrap: "wrap" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              mb: 3,
+              flexWrap: "wrap",
+            }}
+          >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography sx={{ fontSize: "0.7rem", fontFamily: theme.typography.fontFamily, fontWeight: 500, color: theme.palette.text.secondary }}>
+              <Typography
+                sx={{
+                  fontSize: "0.7rem",
+                  fontFamily: theme.typography.fontFamily,
+                  fontWeight: 500,
+                  color: theme.palette.text.secondary,
+                }}
+              >
                 Qty:
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", border: `1px solid ${theme.palette.divider}`, borderRadius: "2px" }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: "2px",
+                }}
+              >
                 <IconButton
                   size="small"
                   onClick={handleDecreaseQuantity}
@@ -589,7 +762,10 @@ const ItemDetails = () => {
                     color: theme.palette.text.secondary,
                     padding: "4px 8px",
                     fontSize: "0.7rem",
-                    "&:hover:not(.Mui-disabled)": { backgroundColor: shades.neutral[100], color: theme.palette.text.primary },
+                    "&:hover:not(.Mui-disabled)": {
+                      backgroundColor: shades.neutral[100],
+                      color: theme.palette.text.primary,
+                    },
                     "&.Mui-disabled": { color: theme.palette.action.disabled },
                   }}
                 >
@@ -625,7 +801,10 @@ const ItemDetails = () => {
                     color: theme.palette.text.secondary,
                     padding: "4px 8px",
                     fontSize: "0.7rem",
-                    "&:hover:not(.Mui-disabled)": { backgroundColor: shades.neutral[100], color: theme.palette.text.primary },
+                    "&:hover:not(.Mui-disabled)": {
+                      backgroundColor: shades.neutral[100],
+                      color: theme.palette.text.primary,
+                    },
                     "&.Mui-disabled": { color: theme.palette.action.disabled },
                   }}
                 >
@@ -636,33 +815,60 @@ const ItemDetails = () => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
               {stockAvailable ? (
                 <>
-                  <CheckCircleIcon sx={{ color: "#4caf50", fontSize: "0.9rem" }} />
-                  <Typography sx={{ fontSize: "0.7rem", fontFamily: theme.typography.fontFamily, color: theme.palette.text.secondary }}>
+                  <CheckCircleIcon
+                    sx={{ color: "#4caf50", fontSize: "0.9rem" }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: "0.7rem",
+                      fontFamily: theme.typography.fontFamily,
+                      color: theme.palette.text.secondary,
+                    }}
+                  >
                     In Stock ({stockCount})
                   </Typography>
                 </>
               ) : (
                 <>
-                  <ErrorIcon sx={{ color: "#f44336", fontSize: "0.9rem" }} />
-                  <Typography sx={{ fontSize: "0.7rem", fontFamily: theme.typography.fontFamily, color: "#f44336" }}>
+                  <ErrorIcon
+                    sx={{ color: "#f44336", fontSize: "0.9rem" }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: "0.7rem",
+                      fontFamily: theme.typography.fontFamily,
+                      color: "#f44336",
+                    }}
+                  >
                     Out of Stock
                   </Typography>
                 </>
               )}
             </Box>
           </Box>
-          <Box display="flex" alignItems="center" gap={2} sx={{ mb: 3 }}>
+          <Box
+            display="flex"
+            alignItems="center"
+            gap={2}
+            sx={{ mb: 3 }}
+          >
             <Button
               onClick={handleCartToggle}
               variant={isItemInCart ? "contained" : "outlined"}
-              sx={isItemInCart ? buttonStyles.inCartButton : buttonStyles.notInCartButton}
+              sx={
+                isItemInCart
+                  ? buttonStyles.inCartButton
+                  : buttonStyles.notInCartButton
+              }
               aria-label={isItemInCart ? "Remove from cart" : "Add to cart"}
             >
               {isItemInCart ? "REMOVE FROM CART" : "ADD TO CART"}
             </Button>
             <IconButton
               onClick={handleWishlistToggle}
-              aria-label={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+              aria-label={
+                isInWishlist ? "Remove from wishlist" : "Add to wishlist"
+              }
               color={isInWishlist ? "error" : "default"}
               sx={{
                 border: `1px solid ${theme.palette.divider}`,
@@ -674,41 +880,86 @@ const ItemDetails = () => {
             </IconButton>
           </Box>
           <Box>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.8rem", fontFamily: theme.typography.fontFamily }}>
-              <strong>Category:</strong> {item.attributes.category || "Unknown"}
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                fontSize: "0.8rem",
+                fontFamily: theme.typography.fontFamily,
+              }}
+            >
+              <strong>Category:</strong>{" "}
+              {item.attributes.category || "Unknown"}
             </Typography>
           </Box>
         </Box>
       </Box>
 
       <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
-        <Tabs value={activeTab} onChange={handleTabChange} aria-label="Product details tabs">
-          <Tab label="DESCRIPTION" value="description" sx={{ fontFamily: theme.typography.fontFamily }} />
-          <Tab label="CONDITION" value="condition" sx={{ fontFamily: theme.typography.fontFamily }} />
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          aria-label="Product details tabs"
+        >
+          <Tab
+            label="DESCRIPTION"
+            value="description"
+            sx={{ fontFamily: theme.typography.fontFamily }}
+          />
+          <Tab
+            label="CONDITION"
+            value="condition"
+            sx={{ fontFamily: theme.typography.fontFamily }}
+          />
         </Tabs>
       </Box>
       <Box sx={{ mb: 6 }}>
         <Box role="tabpanel" hidden={activeTab !== "description"}>
           {item.attributes.shortDescription && (
             <Box>
-              {item.attributes.shortDescription.split("\n").map((line, i) => (
-                <Typography key={i} variant="body2" sx={{ mb: 1.5, lineHeight: 1.5, fontSize: "0.85rem", fontFamily: theme.typography.fontFamily }}>
-                  {line}
-                </Typography>
-              ))}
+              {item.attributes.shortDescription
+                .split("\n")
+                .map((line, i) => (
+                  <Typography
+                    key={i}
+                    variant="body2"
+                    sx={{
+                      mb: 1.5,
+                      lineHeight: 1.5,
+                      fontSize: "0.85rem",
+                      fontFamily: theme.typography.fontFamily,
+                    }}
+                  >
+                    {line}
+                  </Typography>
+                ))}
             </Box>
           )}
         </Box>
         <Box role="tabpanel" hidden={activeTab !== "condition"}>
           <Box sx={{ "& > *": { mb: 1 } }}>
             {item.attributes.mediaCondition && (
-              <Typography variant="body2" sx={{ fontSize: "0.85rem", fontFamily: theme.typography.fontFamily }}>
-                <strong>Media Condition:</strong> {item.attributes.mediaCondition}
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: "0.85rem",
+                  fontFamily: theme.typography.fontFamily,
+                }}
+              >
+                <strong>Media Condition:</strong>{" "}
+                {item.attributes.mediaCondition}
               </Typography>
             )}
             {item.attributes.sleeveCondition && (
-              <Typography variant="body2" sx={{ fontSize: "0.85rem", fontFamily: theme.typography.fontFamily }}>
-                <strong>Sleeve Condition:</strong> {item.attributes.sleeveCondition}
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: "0.85rem",
+                  fontFamily: theme.typography.fontFamily,
+                }}
+              >
+                <strong>Sleeve Condition:</strong>{" "}
+                {item.attributes.sleeveCondition}
               </Typography>
             )}
           </Box>
@@ -717,12 +968,28 @@ const ItemDetails = () => {
 
       {relatedItems.length > 0 && (
         <Box component="section" aria-labelledby="related-products-heading">
-          <Typography id="related-products-heading" variant="h4" component="h2" gutterBottom sx={{ fontWeight: 600, fontFamily: theme.typography.fontFamily }}>
+          <Typography
+            id="related-products-heading"
+            variant="h4"
+            component="h2"
+            gutterBottom
+            sx={{
+              fontWeight: 600,
+              fontFamily: theme.typography.fontFamily,
+            }}
+          >
             Customers Also Bought
           </Typography>
           <Grid container spacing={3} mt={2}>
             {relatedItems.map((relatedItem) => (
-              <Grid item key={relatedItem.id} xs={12} sm={6} md={3} sx={{ display: "flex", justifyContent: "center" }}>
+              <Grid
+                item
+                key={relatedItem.id}
+                xs={12}
+                sm={6}
+                md={3}
+                sx={{ display: "flex", justifyContent: "center" }}
+              >
                 <Item item={relatedItem} />
               </Grid>
             ))}
@@ -733,4 +1000,4 @@ const ItemDetails = () => {
   );
 };
 
-export default ItemDetails; 
+export default ItemDetails;
