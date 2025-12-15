@@ -32,7 +32,7 @@ const ItemDetails = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { itemId } = useParams();
+  const { itemId } = useParams(); // ahora es documentId
 
   const [activeTab, setActiveTab] = useState("description");
   const [item, setItem] = useState(null);
@@ -43,11 +43,9 @@ const ItemDetails = () => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
-  // Stock simulation
   const [stockAvailable] = useState(true);
   const [stockCount] = useState(5);
 
-  // Items from Redux (ShoppingList)
   const itemsFromRedux = useSelector((state) => state.cart.items || []);
   const cart = useSelector((state) => state.cart.cart);
 
@@ -64,7 +62,6 @@ const ItemDetails = () => {
     setIsInWishlist((prev) => !prev);
   }, []);
 
-  // Quantity handlers
   const handleIncreaseQuantity = useCallback(() => {
     if (quantity < stockCount) {
       setQuantity((prev) => prev + 1);
@@ -109,16 +106,15 @@ const ItemDetails = () => {
   }, []);
 
   const handleNavigation = useCallback(
-    (id) => {
-      if (id) {
-        navigate(`/item/${id}`);
+    (documentId) => {
+      if (documentId) {
+        navigate(`/item/${documentId}`);
         window.scrollTo(0, 0);
       }
     },
     [navigate]
   );
 
-  // Decide which items list to use
   const allItems = itemsFromRedux.length > 0 ? itemsFromRedux : itemsFromStore;
 
   useEffect(() => {
@@ -137,6 +133,7 @@ const ItemDetails = () => {
           const raw = itemJson.data;
           const normalized = {
             id: raw.id,
+            documentId: raw.documentId,
             attributes: {
               name: raw.name,
               shortDescription: raw.shortDescription,
@@ -196,6 +193,7 @@ const ItemDetails = () => {
         if (isMounted) {
           const normalized = combined.map((raw) => ({
             id: raw.id,
+            documentId: raw.documentId,
             attributes: {
               name: raw.name,
               shortDescription: raw.shortDescription,
@@ -247,7 +245,10 @@ const ItemDetails = () => {
     const currentIndex = allItems.findIndex((i) => i.id === item.id);
     return {
       prevItem: currentIndex > 0 ? allItems[currentIndex - 1] : null,
-      nextItem: currentIndex < allItems.length - 1 ? allItems[currentIndex + 1] : null,
+      nextItem:
+        currentIndex < allItems.length - 1
+          ? allItems[currentIndex + 1]
+          : null,
     };
   }, [allItems, item]);
 
@@ -259,21 +260,29 @@ const ItemDetails = () => {
     const sameCategoryItems = allItems.filter((relatedItem) => {
       if (!relatedItem?.attributes?.category) return false;
       return (
-        relatedItem.attributes.category.trim().toUpperCase() === currentCategory &&
+        relatedItem.attributes.category.trim().toUpperCase() ===
+          currentCategory &&
         String(relatedItem.id) !== String(item.id) &&
-        !cart.some((cartItem) => String(cartItem.id) === String(relatedItem.id))
+        !cart.some(
+          (cartItem) => String(cartItem.id) === String(relatedItem.id)
+        )
       );
     });
     if (sameCategoryItems.length < 4) {
       const otherCategoryItems = allItems.filter((relatedItem) => {
         if (!relatedItem?.attributes?.category) return false;
         return (
-          relatedItem.attributes.category.trim().toUpperCase() !== currentCategory &&
+          relatedItem.attributes.category.trim().toUpperCase() !==
+            currentCategory &&
           String(relatedItem.id) !== String(item.id) &&
-          !cart.some((cartItem) => String(cartItem.id) === String(relatedItem.id))
+          !cart.some(
+            (cartItem) => String(cartItem.id) === String(relatedItem.id)
+          )
         );
       });
-      const shuffledOthers = [...otherCategoryItems].sort(() => Math.random() - 0.5);
+      const shuffledOthers = [...otherCategoryItems].sort(
+        () => Math.random() - 0.5
+      );
       return [
         ...sameCategoryItems,
         ...shuffledOthers.slice(0, 4 - sameCategoryItems.length),
@@ -499,6 +508,7 @@ const ItemDetails = () => {
             )}
           </Box>
         </Box>
+
         <Box flex="1 1 50%">
           <Box
             display="flex"
@@ -573,7 +583,7 @@ const ItemDetails = () => {
             </Box>
             <Box display="flex" alignItems="center">
               <IconButton
-                onClick={() => prevItem && handleNavigation(prevItem.id)}
+                onClick={() => prevItem && handleNavigation(prevItem.documentId)}
                 disabled={!prevItem}
                 aria-label="Previous item"
                 size="small"
@@ -594,7 +604,7 @@ const ItemDetails = () => {
                 }}
               />
               <IconButton
-                onClick={() => nextItem && handleNavigation(nextItem.id)}
+                onClick={() => nextItem && handleNavigation(nextItem.documentId)}
                 disabled={!nextItem}
                 aria-label="Next item"
                 size="small"
@@ -608,6 +618,7 @@ const ItemDetails = () => {
               </IconButton>
             </Box>
           </Box>
+
           <Box mb={4}>
             <Typography
               variant="h3"
@@ -646,6 +657,7 @@ const ItemDetails = () => {
                 Incl. taxes (plus applicable shipping costs)
               </Typography>
             </Box>
+
             {item.attributes.tracklist && (
               <Box sx={{ mb: 2 }}>
                 <Typography
@@ -704,6 +716,7 @@ const ItemDetails = () => {
                 </Box>
               </Box>
             )}
+
             {item.attributes.longDescription && (
               <Box sx={{ mt: 2, mb: 2 }}>
                 {item.attributes.longDescription
@@ -725,6 +738,7 @@ const ItemDetails = () => {
               </Box>
             )}
           </Box>
+
           <Box
             sx={{
               display: "flex",
@@ -812,6 +826,7 @@ const ItemDetails = () => {
                 </IconButton>
               </Box>
             </Box>
+
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
               {stockAvailable ? (
                 <>
@@ -830,9 +845,7 @@ const ItemDetails = () => {
                 </>
               ) : (
                 <>
-                  <ErrorIcon
-                    sx={{ color: "#f44336", fontSize: "0.9rem" }}
-                  />
+                  <ErrorIcon sx={{ color: "#f44336", fontSize: "0.9rem" }} />
                   <Typography
                     sx={{
                       fontSize: "0.7rem",
@@ -846,6 +859,7 @@ const ItemDetails = () => {
               )}
             </Box>
           </Box>
+
           <Box
             display="flex"
             alignItems="center"
@@ -879,6 +893,7 @@ const ItemDetails = () => {
               {isInWishlist ? <FavoriteIcon /> : <FavoriteBorderOutlinedIcon />}
             </IconButton>
           </Box>
+
           <Box>
             <Typography
               variant="body2"
@@ -913,6 +928,7 @@ const ItemDetails = () => {
           />
         </Tabs>
       </Box>
+
       <Box sx={{ mb: 6 }}>
         <Box role="tabpanel" hidden={activeTab !== "description"}>
           {item.attributes.shortDescription && (
@@ -936,6 +952,7 @@ const ItemDetails = () => {
             </Box>
           )}
         </Box>
+
         <Box role="tabpanel" hidden={activeTab !== "condition"}>
           <Box sx={{ "& > *": { mb: 1 } }}>
             {item.attributes.mediaCondition && (
