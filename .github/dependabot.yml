@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"  # Si usas yarn.lock, cámbialo a "yarn"
+    directory: "/client"
+    schedule:
+      interval: "daily"
+
+  - package-ecosystem: "npm"  # o "yarn"
+    directory: "/server"
+    schedule:
+      interval: "daily"
