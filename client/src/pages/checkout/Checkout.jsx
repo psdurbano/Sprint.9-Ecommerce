@@ -27,9 +27,8 @@ const Checkout = () => {
   const handleFormSubmit = async (values, actions) => {
     setActiveStep(activeStep + 1);
 
-    // FIX: Usar optional chaining consistentemente
     const useSame = values?.shippingAddress?.isSameAddress ?? true;
-    
+
     if (isFirstStep && useSame) {
       actions.setFieldValue("shippingAddress", {
         ...values.billingAddress,
@@ -55,17 +54,18 @@ const Checkout = () => {
         throw new Error("Cart is empty");
       }
 
-      // FIX: Optional chaining para acceso seguro
       const useSame = values?.shippingAddress?.isSameAddress ?? true;
       const billingCountry = values?.billingAddress?.country || "";
       const shippingCountry = values?.shippingAddress?.country || "";
       const countryForShipping = useSame ? billingCountry : shippingCountry || "";
 
       const requestBody = {
-        userName: [values.firstName, values.lastName].join(" "),
-        email: values.email,
-        products: cart.map(({ id, count }) => ({ id, count })),
-        shippingCountry: countryForShipping,
+        data: {
+          userName: [values.firstName, values.lastName].join(" "),
+          email: values.email,
+          products: cart.map(({ id, count }) => ({ id, count })), // ids numéricos
+          shippingCountry: countryForShipping,
+        },
       };
 
       const response = await fetch(API_ENDPOINTS.orders, {
@@ -94,7 +94,7 @@ const Checkout = () => {
     } catch (error) {
       console.error("Payment error:", error);
       alert(`Error processing payment: ${error.message}`);
-      setActiveStep(activeStep - 1);
+      setActiveStep((prev) => Math.max(prev - 1, 0));
     } finally {
       setIsProcessing(false);
     }
@@ -186,7 +186,9 @@ const Checkout = () => {
                   <Button
                     fullWidth
                     variant="outlined"
-                    onClick={() => setActiveStep(activeStep - 1)}
+                    onClick={() =>
+                      !isProcessing && setActiveStep((prev) => prev - 1)
+                    }
                     disabled={isProcessing}
                     sx={{
                       borderColor: shades.primary[500],
