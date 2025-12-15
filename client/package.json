@@ -20,7 +20,7 @@
     "react-responsive-carousel": "^3.2.23",
     "react-router-dom": "^7.10.1",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4",
+    "web-vitals": "^5.1.0",
     "yup": "^1.1.1"
   },
   "scripts": {
