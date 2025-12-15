@@ -10,7 +10,7 @@
     "strapi": "strapi"
   },
   "dependencies": {
-    "@strapi/plugin-i18n": "4.9.1",
+    "@strapi/plugin-i18n": "4.25.23",
     "@strapi/plugin-users-permissions": "5.32.0",
     "@strapi/provider-upload-cloudinary": "^5.26.0",
     "@strapi/strapi": "4.9.1",
