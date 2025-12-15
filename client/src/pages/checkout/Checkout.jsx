@@ -25,7 +25,7 @@ const Checkout = () => {
   const isSecondStep = activeStep === 1;
 
   const handleFormSubmit = async (values, actions) => {
-    setActiveStep(activeStep + 1);
+    setActiveStep((prev) => prev + 1);
 
     const useSame = values?.shippingAddress?.isSameAddress ?? true;
 
@@ -60,13 +60,13 @@ const Checkout = () => {
       const countryForShipping = useSame ? billingCountry : shippingCountry || "";
 
       const requestBody = {
-        data: {
-          userName: [values.firstName, values.lastName].join(" "),
-          email: values.email,
-          products: cart.map(({ id, count }) => ({ id, count })), // ids numéricos
-          shippingCountry: countryForShipping,
-        },
+        userName: [values.firstName, values.lastName].join(" "),
+        email: values.email,
+        products: cart.map(({ id, count }) => ({ id, count })),
+        shippingCountry: countryForShipping,
       };
+
+      console.log("requestBody in makePayment:", requestBody);
 
       const response = await fetch(API_ENDPOINTS.orders, {
         method: "POST",
