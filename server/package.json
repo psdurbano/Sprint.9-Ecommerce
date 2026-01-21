@@ -16,7 +16,7 @@
   "@strapi/strapi": "5.32.0",
   "better-sqlite3": "12.6.0",
   "pg": "^8.17.1",
-  "stripe": "^20.1.2",
+  "stripe": "^20.2.0",
   "react": "^19.2.3",
   "react-dom": "^19.2.3"
 },
